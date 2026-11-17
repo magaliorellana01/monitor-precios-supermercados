@@ -1,0 +1,14 @@
+# Entorno
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# Datos crudos de SEPA: no se commitean (zips y CSV completos)
+data/crudo/
+*.zip
+
+# Base del modelo (se regenera)
+data/modelo.duckdb
+
+# Configuración local del editor
+.vscode/
