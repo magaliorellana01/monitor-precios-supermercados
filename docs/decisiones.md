@@ -61,16 +61,28 @@ reduce el tamaño a la mitad (de 15 a 7 MB por día), así que no cambia la deci
 
 ---
 
-## 5. Almacenamiento: los datos diarios fuera de git *(confirmada el 18/11/2026; se implementa en la etapa 3)*
+## 5. Almacenamiento: los datos diarios fuera de git *(confirmada el 18/11/2026; implementada en la etapa 3)*
 
 **Decisión:**
-- **Detalle diario** (precios por sucursal y producto de CABA + GBA, ~15 MB por día en Parquet zstd) → se guarda como
-  **archivo adjunto de un Release de GitHub**, un archivo por día. No pesa en el repo y se puede bajar con una URL.
-- **Tablas de productos y sucursales** → también en el Release, actualizadas en cada corrida.
-- **En el repo** → solo las tablas chicas que usan el dashboard y el reporte (canasta, índice, métricas), que se regeneran en cada corrida.
+- **Los Parquet diarios** (precios, sucursales, comercios y productos de CABA + GBA, ~17 MB por día en total) se guardan como
+  **archivos adjuntos de Releases de GitHub**, con la forma `precios_2026-11-18.parquet`. No pesan en el repo y se pueden bajar con una URL.
+- **Un Release por mes** (`datos-2026-11`): GitHub admite como máximo 1000 archivos por Release, y con 4 tablas por día
+  un solo Release alcanzaría para 250 días. Un mes son 124 archivos.
+- **En el repo** van los logs (`data/ingesta/log_ingesta.csv` y `data/calidad/log_calidad.csv`) y, más adelante, solo las tablas chicas
+  que usan el dashboard y el reporte (canasta, índice, métricas), que se regeneran en cada corrida.
+- La subida y la bajada están en `src/almacen.py`.
 
-**Por qué:** guardar el detalle en git sumaría unos 5,5 GB por año, y cada commit de datos queda para siempre en el historial.
+**Por qué:** guardar el detalle en git sumaría unos 6 GB por año, y cada commit de datos queda para siempre en el historial.
 Hasta la versión agregada por bandera y producto llega a 1 GB por año. GitHub recomienda repos de menos de 1 GB.
+
+**Crecimiento medido (primeros 7 días):**
+
+| Dónde | Por día | Por año |
+|---|---|---|
+| Repo (los dos logs) | ~1,5 KB | ~0,5 MB |
+| Releases (Parquet) | ~17 MB | ~6,2 GB |
+
+Los Releases no tienen un tope de espacio total (sí de 2 GB por archivo, muy lejos de los 17 MB).
 
 **Descartado:**
 - *Commitear los Parquet diarios* (lo que planteaba el plan original): el repo se vuelve inmanejable en pocos meses.
@@ -162,3 +174,35 @@ solo son únicos dentro de un comercio, se calcula por comercio y código.
 **Avisos permanentes.** Hoy cuatro avisos aparecen todos los días: los dos comercios descartados (36 y 47), los 117 precios
 absurdos, los 55 mil precios de sucursales que no figuran en `sucursales.csv` y unas 17 sucursales sin precios. Son problemas conocidos de la fuente
 (ver `docs/fuente_sepa.md`). El valor del log está en ver cuándo **cambian**, no en que aparezcan.
+
+---
+
+## 10. Automatización: cuándo corre, qué pasa si falla y quién commitea
+
+**Decisión:** el workflow `.github/workflows/descarga_diaria.yml` corre todos los días a las **18:00 UTC (15:00 en Argentina)**
+y también a mano (`workflow_dispatch`). En cada corrida:
+
+1. Verifica que el portal responda (`--verificar-acceso`).
+2. Baja de los Releases los últimos 10 días, para saber qué días ya están guardados y poder comparar contra el día anterior.
+3. Corre la ingesta: procesa solo los días que faltan, con sus controles de calidad.
+4. Sube los días nuevos al Release del mes.
+5. Commitea los dos logs, aunque la ingesta haya fallado: así el motivo del error queda registrado.
+6. Si la ingesta falló, marca la corrida como fallida y GitHub avisa por mail.
+
+**Por qué:**
+- **15:00 y no a las 13:30.** El portal publica el zip del día alrededor de las 13:20, y GitHub puede demorar una corrida programada hasta una hora
+  cuando hay mucha carga. A las 15:00 el archivo ya está y queda margen.
+- **Un solo horario.** Como el portal guarda 7 días y la ingesta es idempotente, si una corrida falla la del día siguiente recupera el día perdido.
+  Una segunda corrida diaria no suma nada.
+- **Bajar los últimos días en cada corrida.** Un runner de GitHub empieza sin archivos. Sin esto procesaría de nuevo los 7 días
+  disponibles todos los días (~10 minutos y más de 120 MB subidos), y los controles no tendrían un día anterior contra el cual comparar.
+- **Los tests no están en este workflow.** Un test roto no debe detener la recolección de datos, porque el portal no guarda historial. Corren en
+  otro workflow (`tests.yml`), en cada Pull Request.
+- **Commit diario de los logs.** Cada corrida agrega la fila `portal_actualizado` al log de calidad, así que siempre hay un commit. Eso evita que GitHub desactive el workflow
+  programado por 60 días sin actividad (aplica a repos públicos).
+- **Memoria.** Procesar un día ocupa un pico de 3,7 GB de RAM. Entra en los runners de GitHub (7 GB en repos privados, 16 GB en públicos).
+
+**Descartado:**
+- *Commitear los Parquet* (plan original): ver decisión 5.
+- *Un runner propio (self-hosted) en esta PC:* solo hace falta si el servidor del portal bloquea las IP de GitHub. Habría que dejar la PC prendida todos los días. Se prueba primero la opción sin runner propio.
+- *Subir los Parquet como artefactos del workflow:* GitHub los borra a los 90 días como máximo.
