@@ -1,0 +1,6 @@
+nombre,valor,descripcion
+min_sucursales_cadena,5,Mínimo de sucursales de una cadena en la zona para entrar en rankings y comparaciones
+min_cadenas_dispersion,5,Mínimo de cadenas que venden un producto para calcular su dispersión de precios
+fecha_base_indice,2026-11-13,Día en que el índice de la canasta vale 100 (primer día con las 12 cadenas)
+max_dias_arrastre,3,Si una cadena no informa un producto de la canasta un día se usa su último precio de hasta N días atrás
+retener_dias_fct_precios,60,Días de detalle por sucursal que se conservan en fct_precios (la historia queda en fct_precio_representativo)

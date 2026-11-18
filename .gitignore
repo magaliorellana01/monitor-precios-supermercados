@@ -8,7 +8,7 @@ data/crudo/
 *.zip
 
 # Base del modelo (se regenera)
-data/modelo.duckdb
+data/modelo.duckdb*
 
 # Configuración local del editor
 .vscode/
