@@ -173,8 +173,9 @@ ronda los 10 comercios. Hay suficientes productos comunes para armar una canasta
 
 ## Pendiente de verificar
 
-- **Acceso desde GitHub Actions:** falta confirmar que el servidor no bloquea IPs del exterior. Se prueba con
-  un workflow manual al empezar la etapa 3. Si lo bloquea, la alternativa es un runner propio o descargar desde una PC.
+- **Acceso desde GitHub Actions:** falta confirmar que el servidor no bloquea las IP del exterior. Se prueba corriendo a mano el workflow
+  `descarga_diaria` con la opción `solo_conexion`. Si las bloquea, la alternativa es un runner propio (ver `docs/decisiones.md`, decisión 10).
+
 ## Estabilidad entre días (primeros 7 días, 12 al 18/11/2026)
 
 La primera corrida de la ingesta recuperó los 7 paquetes disponibles. Esto es lo que se vio:

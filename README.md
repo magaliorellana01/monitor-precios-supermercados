@@ -116,3 +116,29 @@ Antes de guardar cada día se corren 13 controles (`src/calidad.py` y `sql/calid
 | `caida_sucursales_bandera` | Cadenas que informan menos de la mitad de sus sucursales | cualquiera | |
 
 Los precios inválidos, duplicados y absurdos se descartan antes de guardar. El criterio completo está en `docs/decisiones.md` (decisiones 8 y 9).
+
+### Automatización
+
+El workflow [`descarga_diaria.yml`](.github/workflows/descarga_diaria.yml) corre todos los días a las 15:00 (hora argentina)
+y también se puede lanzar a mano desde la pestaña *Actions*. En cada corrida baja el día, lo controla y lo guarda.
+
+Dónde queda cada cosa:
+
+| Qué | Dónde |
+|---|---|
+| Parquet diarios (~17 MB por día) | Archivos de un Release por mes: `datos-2026-11`, `datos-2026-12`... |
+| Logs de ingesta y de calidad | En el repo, commiteados por el workflow |
+
+Si algo falla (error de calidad, portal sin datos, descarga rota), la corrida queda en rojo y GitHub avisa por mail.
+Para recibir el aviso: *Settings → Notifications → Actions* y activar *Send notifications for failed workflows only*.
+
+Comandos para trabajar con los Releases desde tu PC (requieren la [CLI de GitHub](https://cli.github.com) y `gh auth login`):
+
+| Comando | Qué hace |
+|---|---|
+| `python -m src.almacen subir` | Sube a los Releases los días de `data/` que falten. |
+| `python -m src.almacen subir --forzar` | Reemplaza lo ya subido (por ejemplo, tras reprocesar un día). |
+| `python -m src.almacen bajar --dias 10` | Baja los últimos días que no estén en `data/`. |
+| `python -m src.ingesta --verificar-acceso` | Prueba que se pueda llegar al portal. |
+
+Los workflows instalan solo `requirements-pipeline.txt` (DuckDB y pytest). El resto de `requirements.txt` es para los notebooks.
