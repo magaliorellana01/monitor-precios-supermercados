@@ -53,7 +53,7 @@ flowchart LR
 - [x] Etapa 1: pipeline de descarga
 - [x] Etapa 2: controles de calidad
 - [ ] Etapa 3: automatización de la descarga diaria
-- [ ] Etapa 4: modelo de datos en SQL
+- [x] Etapa 4: modelo de datos en SQL
 - [ ] Etapa 5: análisis
 - [ ] Etapa 6: dashboard
 - [ ] Etapa 7: reporte semanal automático
@@ -153,3 +153,41 @@ Si la tarea se perdió la hora, corre apenas la prendés.
 | `python -m src.ingesta --verificar-acceso` | Prueba que se pueda llegar al portal. |
 
 Los tests de GitHub instalan solo `requirements-pipeline.txt` (DuckDB y pytest). El resto de `requirements.txt` es para los notebooks.
+
+### Modelo de datos
+
+```
+python -m src.modelo             # carga los días nuevos y recalcula las métricas (2 segundos si no hay nada nuevo)
+python -m src.modelo --rehacer   # lo arma de cero con todos los días guardados (~30 segundos con 7 días)
+```
+
+Genera `data/modelo.duckdb`. Todas las transformaciones están en SQL, en la carpeta `sql/`:
+
+| Capa | Tablas |
+|---|---|
+| `01_staging` | Vistas temporales sobre los Parquet y los archivos de `config/` |
+| `02_dimensiones` | `dim_fecha`, `dim_cadena`, `dim_sucursal`, `dim_producto`, `dim_canasta`, `dim_par_marca`, `parametros` |
+| `03_hechos` | `fct_precios` (sucursal, producto y día), `fct_precio_representativo` (mediana por cadena, zona y día), `fct_cobertura_dia` |
+| `04_metricas` | `m_canasta_dia`, `m_ranking_canasta_dia`, `m_indice_cadena_dia`, `m_indice_general_dia`, `m_dispersion_producto_dia`, `m_prima_marca_dia` |
+
+Los hechos son incrementales: cada día se carga una sola vez, y se vuelve a cargar si su Parquet se reprocesó.
+
+Lo que se puede cambiar sin tocar el código está en `config/`:
+
+| Archivo | Qué define |
+|---|---|
+| `cadenas.csv` | Qué es cada cadena y su rubro (supermercado, farmacia, tienda de conveniencia) |
+| `canasta.csv` | Los 30 productos de la canasta, por código EAN |
+| `marcas.csv` | Pares de producto líder y alternativo para la prima de marca |
+| `parametros.csv` | Mínimo de sucursales para comparar cadenas, día base del índice, días de arrastre de precios y otros |
+
+Ejemplo, el ranking de la canasta del último día:
+
+```sql
+select posicion, cadena, costo_canasta, sobre_la_mas_barata_pct
+from m_ranking_canasta_dia
+where zona = 'TODAS' and fecha = (select max(fecha) from m_ranking_canasta_dia)
+order by posicion;
+```
+
+Las decisiones de diseño (qué es una cadena, cómo se eligió la canasta, cómo se calcula el índice) están en `docs/decisiones.md`, decisiones 11 a 15.
