@@ -32,7 +32,7 @@ def test_paquete_sano_se_guarda_y_es_idempotente(tmp_path, datos_temporales):
     log_calidad = datos_temporales / "calidad" / "log_calidad.csv"
     resultados = {f["control"]: f["resultado"] for f in csv.DictReader(open(log_calidad, encoding="utf-8"))}
     assert set(resultados.values()) == {"ok"}
-    assert len(resultados) == 13  # columnas, fecha, comercios descartados y los 10 controles de datos
+    assert len(resultados) == 14  # columnas, fecha, comercios descartados, continuidad y los 10 controles de datos
 
 
 def test_error_grave_no_guarda_el_dia_y_sale_con_codigo_1(tmp_path, datos_temporales):

@@ -160,3 +160,41 @@ def test_sin_la_cli_de_github_sale_con_codigo_1(monkeypatch):
 
     monkeypatch.setattr(almacen, "gh", no_instalada)
     assert almacen.main(["bajar"]) == 1
+
+
+# --------------------------------------------------------------------------- logs
+
+@pytest.fixture
+def logs_locales(datos_temporales):
+    ingesta.LOG_INGESTA.parent.mkdir(parents=True, exist_ok=True)
+    ingesta.LOG_INGESTA.write_text("fecha,dia\n2026-11-18,miercoles\n", encoding="utf-8")
+    almacen.calidad.RUTA_LOG.parent.mkdir(parents=True, exist_ok=True)
+    almacen.calidad.RUTA_LOG.write_text("fecha,control\n2026-11-18,duplicados\n", encoding="utf-8")
+
+
+def test_subir_sube_los_logs_y_los_reemplaza_en_cada_corrida(gh_falso, logs_locales):
+    almacen.subir()
+    assert sorted(gh_falso.releases["datos-logs"]) == ["log_calidad.csv", "log_ingesta.csv"]
+
+    ingesta.LOG_INGESTA.write_text("fecha,dia\n2026-11-18,miercoles\n2026-11-19,jueves\n", encoding="utf-8")
+    almacen.subir()
+    assert gh_falso.releases["datos-logs"]["log_ingesta.csv"].count(b"\n") == 3
+
+
+def test_bajar_restaura_los_logs_que_faltan_sin_pisar_los_que_hay(gh_falso, logs_locales, monkeypatch, tmp_path):
+    almacen.subir()
+
+    monkeypatch.setattr(ingesta, "DIR_DATOS", tmp_path / "otra_pc" / "data")
+    monkeypatch.setattr(ingesta, "LOG_INGESTA", tmp_path / "otra_pc" / "data" / "ingesta" / "log_ingesta.csv")
+    monkeypatch.setattr(almacen.calidad, "RUTA_LOG", tmp_path / "otra_pc" / "data" / "calidad" / "log_calidad.csv")
+    almacen.bajar(dias=10, hoy=date(2026, 11, 18))
+    assert ingesta.LOG_INGESTA.read_text(encoding="utf-8").startswith("fecha,dia")
+
+    ingesta.LOG_INGESTA.write_text("versión local más nueva\n", encoding="utf-8")
+    almacen.bajar(dias=10, hoy=date(2026, 11, 18))
+    assert ingesta.LOG_INGESTA.read_text(encoding="utf-8") == "versión local más nueva\n"
+
+
+def test_sin_logs_locales_no_se_crea_el_release_de_logs(gh_falso, datos_temporales):
+    almacen.subir()
+    assert "datos-logs" not in gh_falso.releases

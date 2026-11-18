@@ -255,11 +255,12 @@ def correr_controles(con: duckdb.DuckDBPyConnection, fecha: date, dia: str, fech
                      resultado: Resultado, previos: list[calidad.ResultadoControl]) -> list[calidad.ResultadoControl]:
     """Corre todos los controles de calidad del día, los registra en el log y los informa.
     `previos` son los controles que ya se corrieron antes del SQL (las columnas)."""
-    calidad.cargar_dia_anterior(con, fecha, DIR_DATOS)
+    anterior = calidad.cargar_dia_anterior(con, fecha, DIR_DATOS)
     resultados = [
         *previos,
         calidad.controlar_fecha(fecha, dia, DIAS_SEMANA[fecha.weekday()], fecha_esperada),
         calidad.controlar_comercios(fecha, resultado.comercios_descartados),
+        calidad.controlar_continuidad(fecha, anterior),
         *calidad.controlar_datos(con, fecha),
     ]
     calidad.registrar(resultados)
