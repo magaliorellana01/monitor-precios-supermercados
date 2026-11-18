@@ -8,7 +8,7 @@ El portal publica los precios del día pero **no guarda el historial**. Por eso 
 
 ## Lo que encontré
 
-> Con **7 días de datos** (12 al 18 de noviembre de 2026). Las comparaciones entre cadenas ya se pueden leer; la evolución en el tiempo todavía no. Los números se actualizan en el [dashboard](#dashboard-y-reporte-semanal) y en el reporte semanal.
+> Con **7 días de datos** (12 al 18 de noviembre de 2026). Las comparaciones entre cadenas ya se pueden leer; la evolución en el tiempo todavía no. Los números se actualizan en el [dashboard](https://precios-super.streamlit.app) y en el reporte semanal.
 
 **1. Elegir la cadena importa más que dónde se vive.** La misma cadena cobra lo mismo en CABA que en GBA (diferencia de 0% a −0,3%). Las diferencias de precio están entre cadenas, no entre zonas.
 
@@ -28,7 +28,7 @@ El portal publica los precios del día pero **no guarda el historial**. Por eso 
 
 ## Dashboard y reporte semanal
 
-- **Dashboard (Streamlit):** ranking de la canasta, evolución, productos, marcas, inflación y promociones, con filtro por zona. Código en [`app/`](app/app.py).
+- **[Dashboard en Streamlit](https://precios-super.streamlit.app):** ranking de la canasta, evolución, productos, marcas, inflación y promociones, con filtro por zona. Código en [`app/`](app/app.py). Si la app está dormida por falta de visitas, tocá "Yes, get this app back up" y esperá unos segundos.
 - **Reporte semanal:** un Markdown por semana (lunes a domingo) con qué cadena fue la más barata, cómo cambió el ranking y el índice, qué productos subieron y bajaron, las promociones y la calidad de los datos. Se publican en el Release `reportes-semanales`.
 - **Análisis:** [notebook](notebooks/01_analisis.ipynb) que responde las cinco preguntas con consultas SQL de [`sql/05_analisis/`](sql/05_analisis/).
 
