@@ -68,8 +68,8 @@ reduce el tamaño a la mitad (de 15 a 7 MB por día), así que no cambia la deci
   **archivos adjuntos de Releases de GitHub**, con la forma `precios_2026-11-18.parquet`. No pesan en el repo y se pueden bajar con una URL.
 - **Un Release por mes** (`datos-2026-11`): GitHub admite como máximo 1000 archivos por Release, y con 4 tablas por día
   un solo Release alcanzaría para 250 días. Un mes son 124 archivos.
-- **En el repo** van los logs (`data/ingesta/log_ingesta.csv` y `data/calidad/log_calidad.csv`) y, más adelante, solo las tablas chicas
-  que usan el dashboard y el reporte (canasta, índice, métricas), que se regeneran en cada corrida.
+- **Los logs** (`log_ingesta.csv` y `log_calidad.csv`) van en un Release aparte, `datos-logs`, que se reemplaza en cada corrida.
+- **En el repo** quedan solo el código y, más adelante, las tablas chicas que usan el dashboard y el reporte (canasta, índice, métricas).
 - La subida y la bajada están en `src/almacen.py`.
 
 **Por qué:** guardar el detalle en git sumaría unos 6 GB por año, y cada commit de datos queda para siempre en el historial.
@@ -79,7 +79,7 @@ Hasta la versión agregada por bandera y producto llega a 1 GB por año. GitHub 
 
 | Dónde | Por día | Por año |
 |---|---|---|
-| Repo (los dos logs) | ~1,5 KB | ~0,5 MB |
+| Repo | nada (ni Parquet ni logs) | nada |
 | Releases (Parquet) | ~17 MB | ~6,2 GB |
 
 Los Releases no tienen un tope de espacio total (sí de 2 GB por archivo, muy lejos de los 17 MB).
@@ -153,7 +153,7 @@ solo son únicos dentro de un comercio, se calcula por comercio y código.
   sin precios, más del 1% de precios inválidos, duplicados o absurdos, más del 5% de precios de sucursales que no existen,
   más del 20% de las sucursales sin precios, una caída de filas de más del 30% frente al día anterior, o un portal sin datos de hoy ni de ayer.
 - **Advertencia:** el día se guarda y el aviso queda en `data/calidad/log_calidad.csv`. Incluye una caída de filas de más del 10%,
-  una cadena que informó ayer y hoy no, o una cadena que informa menos de la mitad de sus sucursales.
+  una cadena que informó ayer y hoy no, una cadena que informa menos de la mitad de sus sucursales, o días sin datos entre este y el último día guardado.
 - Todos los resultados (también los `ok`) se registran, para poder ver cómo evolucionan.
 
 **Por qué:**
@@ -168,7 +168,7 @@ solo son únicos dentro de un comercio, se calcula por comercio y código.
 
 **Descartado:**
 - *Frenar siempre ante cualquier cadena ausente:* ver arriba.
-- *Que los avisos solo se muestren por pantalla:* en GitHub Actions nadie los ve. Quedan en un CSV versionado.
+- *Que los avisos solo se muestren por pantalla:* en una ejecución automática nadie los ve. Quedan en un CSV (que se sube al Release `datos-logs`).
 - *Umbrales distintos por cadena:* más precisos, pero hay que mantenerlos a mano. Se puede retomar si los avisos molestan.
 
 **Avisos permanentes.** Hoy cuatro avisos aparecen todos los días: los dos comercios descartados (36 y 47), los 117 precios
@@ -177,32 +177,39 @@ absurdos, los 55 mil precios de sucursales que no figuran en `sucursales.csv` y 
 
 ---
 
-## 10. Automatización: cuándo corre, qué pasa si falla y quién commitea
+## 10. Automatización: la ejecución diaria corre en la PC, no en GitHub Actions
 
-**Decisión:** el workflow `.github/workflows/descarga_diaria.yml` corre todos los días a las **18:00 UTC (15:00 en Argentina)**
-y también a mano (`workflow_dispatch`). En cada corrida:
+**Decisión:** la ejecución diaria corre en la PC con el **Programador de tareas de Windows**, todos los días a las 15:00.
+El script `scripts/tarea_diaria.ps1` lanza `python -m src.diaria`, que:
 
-1. Verifica que el portal responda (`--verificar-acceso`).
-2. Baja de los Releases los últimos 10 días, para saber qué días ya están guardados y poder comparar contra el día anterior.
-3. Corre la ingesta: procesa solo los días que faltan, con sus controles de calidad.
-4. Sube los días nuevos al Release del mes.
-5. Commitea los dos logs, aunque la ingesta haya fallado: así el motivo del error queda registrado.
-6. Si la ingesta falló, marca la corrida como fallida y GitHub avisa por mail.
+1. Baja de los Releases lo que falte en `data/` (útil si se cambia de PC).
+2. Corre la ingesta: descarga los días nuevos, los controla y los guarda.
+3. Sube los días nuevos y los logs a los Releases (`datos-AAAA-MM` y `datos-logs`).
 
-**Por qué:**
-- **15:00 y no a las 13:30.** El portal publica el zip del día alrededor de las 13:20, y GitHub puede demorar una corrida programada hasta una hora
-  cuando hay mucha carga. A las 15:00 el archivo ya está y queda margen.
-- **Un solo horario.** Como el portal guarda 7 días y la ingesta es idempotente, si una corrida falla la del día siguiente recupera el día perdido.
-  Una segunda corrida diaria no suma nada.
-- **Bajar los últimos días en cada corrida.** Un runner de GitHub empieza sin archivos. Sin esto procesaría de nuevo los 7 días
-  disponibles todos los días (~10 minutos y más de 120 MB subidos), y los controles no tendrían un día anterior contra el cual comparar.
-- **Los tests no están en este workflow.** Un test roto no debe detener la recolección de datos, porque el portal no guarda historial. Corren en
-  otro workflow (`tests.yml`), en cada Pull Request.
-- **Commit diario de los logs.** Cada corrida agrega la fila `portal_actualizado` al log de calidad, así que siempre hay un commit. Eso evita que GitHub desactive el workflow
-  programado por 60 días sin actividad (aplica a repos públicos).
-- **Memoria.** Procesar un día ocupa un pico de 3,7 GB de RAM. Entra en los runners de GitHub (7 GB en repos privados, 16 GB en públicos).
+Si algo falla, termina con código 1, **sube igual lo que haya salido bien y los logs** (con el motivo del error) y muestra una
+ventana de aviso en pantalla. El detalle queda en `data/ingesta/ultima_ejecucion.log`. La tarea se registra una vez con
+`scripts/registrar_tarea.ps1`. GitHub Actions se usa solo para correr los tests en cada Pull Request (`tests.yml`).
+
+**Por qué no GitHub Actions:** el plan original era un workflow diario. El 18/11/2026 se probó y **el servidor del portal
+(`datos.produccion.gob.ar`) responde HTTP 403 a los runners de GitHub**, ya en la primera consulta, la de la API.
+Se repitió la prueba con un User-Agent de navegador y dio lo mismo: es un bloqueo por IP, no por cómo se identifica el programa.
+Desde una conexión común de Argentina funciona.
+
+**Por qué no pasa nada si la PC no está siempre prendida:**
+- El portal guarda **7 días**, así que se puede tener la PC apagada hasta 6 días seguidos sin perder datos: la siguiente corrida baja los días que faltan.
+- La tarea se registra con "correr apenas se pueda si se perdió la hora": si la PC estaba apagada a las 15:00, corre cuando se prende.
+- El control `dias_sin_datos` deja una advertencia en el log si entre el último día guardado y el nuevo hay un hueco.
+- Lo único que no se recupera es una pausa de más de 7 días. El portal no guarda historial.
+
+**Por qué los logs no van en git:** la tarea corre dentro de la carpeta de trabajo, donde también se editan ramas.
+Si commiteara los logs dejaría cambios sin guardar y ensuciaría cada rama. Los logs se guardan en el Release `datos-logs`, donde se
+reemplazan en cada corrida (el historial de los primeros días quedó en el historial de git).
 
 **Descartado:**
-- *Commitear los Parquet* (plan original): ver decisión 5.
-- *Un runner propio (self-hosted) en esta PC:* solo hace falta si el servidor del portal bloquea las IP de GitHub. Habría que dejar la PC prendida todos los días. Se prueba primero la opción sin runner propio.
-- *Subir los Parquet como artefactos del workflow:* GitHub los borra a los 90 días como máximo.
+- *Un runner propio de GitHub (self-hosted) en esta PC:* tiene la misma dependencia de que la PC esté prendida que la tarea programada, y suma un servicio permanente que mantener.
+- *Un servidor propio o un servicio en la nube (VPS, funciones serverless):* la mayoría usa IP de centros de datos y es probable que reciban el mismo 403. Además suman costo y cuentas.
+- *Pedirle al portal que desbloquee las IP de GitHub:* no hay un canal para eso y no depende de este proyecto.
+- *Commitear los logs desde la tarea:* ver arriba.
+
+**Cómo se volvería a GitHub Actions:** si el portal deja de bloquear las IP de GitHub, el workflow original está en el historial de git
+(Pull Request #4). El acceso se puede probar con `python -m src.ingesta --verificar-acceso` desde un workflow manual.

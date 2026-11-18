@@ -35,7 +35,7 @@ flowchart LR
 | Descarga y orquestación | Python |
 | Transformaciones y métricas | DuckDB y SQL |
 | Almacenamiento | Parquet particionado por fecha |
-| Automatización | GitHub Actions |
+| Automatización | Programador de tareas de Windows (GitHub Actions corre los tests) |
 | Dashboard | Streamlit |
 | Inflación oficial | API de ArgentinaDatos (IPC del INDEC) |
 
@@ -52,7 +52,7 @@ flowchart LR
 - [x] Etapa 0: reconocimiento de la base SEPA ([documentación de la fuente](docs/fuente_sepa.md))
 - [x] Etapa 1: pipeline de descarga
 - [x] Etapa 2: controles de calidad
-- [ ] Etapa 3: automatización con GitHub Actions
+- [ ] Etapa 3: automatización de la descarga diaria
 - [ ] Etapa 4: modelo de datos en SQL
 - [ ] Etapa 5: análisis
 - [ ] Etapa 6: dashboard
@@ -92,10 +92,10 @@ y el resumen de cada corrida en `data/ingesta/log_ingesta.csv`.
 
 ### Controles de calidad
 
-Antes de guardar cada día se corren 13 controles (`src/calidad.py` y `sql/calidad/`). Su resultado queda en
+Antes de guardar cada día se corren 14 controles (`src/calidad.py` y `sql/calidad/`). Su resultado queda en
 `data/calidad/log_calidad.csv`, con la columna `resultado` en `ok`, `advertencia` o `error`.
 
-- **Error grave:** el día no se guarda y el comando termina con código de salida 1 (así GitHub Actions marca la corrida como fallida).
+- **Error grave:** el día no se guarda y el comando termina con código de salida 1 (así la tarea diaria sabe que falló y avisa).
 - **Advertencia:** el día se guarda y el aviso queda registrado.
 
 | Control | Qué detecta | Advertencia | Error |
@@ -112,6 +112,7 @@ Antes de guardar cada día se corren 13 controles (`src/calidad.py` y `sql/calid
 | `sucursales_sin_precios` | Sucursales de la zona sin ningún precio | cualquiera | más del 20% |
 | `banderas_sin_comercio` | Precios de una bandera que no figura en `comercio.csv` | cualquiera | |
 | `variacion_filas` | Caída de filas frente al último día guardado | más del 10% | más del 30% |
+| `dias_sin_datos` | Días sin datos guardados entre el último día y este (la ejecución diaria no corrió) | cualquiera | |
 | `banderas_ausentes` | Cadenas que informaron el día anterior y hoy no | cualquiera | |
 | `caida_sucursales_bandera` | Cadenas que informan menos de la mitad de sus sucursales | cualquiera | |
 
@@ -119,26 +120,36 @@ Los precios inválidos, duplicados y absurdos se descartan antes de guardar. El 
 
 ### Automatización
 
-El workflow [`descarga_diaria.yml`](.github/workflows/descarga_diaria.yml) corre todos los días a las 15:00 (hora argentina)
-y también se puede lanzar a mano desde la pestaña *Actions*. En cada corrida baja el día, lo controla y lo guarda.
+La descarga diaria corre en tu PC con el **Programador de tareas de Windows**, todos los días a las 15:00. No corre en GitHub Actions porque
+el portal bloquea las IP de GitHub (HTTP 403, ver `docs/decisiones.md`, decisión 10). Actions solo corre los tests en cada Pull Request.
 
-Dónde queda cada cosa:
+Para dejarla funcionando (una sola vez):
+
+1. Instalar la [CLI de GitHub](https://cli.github.com) y correr `gh auth login`.
+2. Registrar la tarea, desde PowerShell en la carpeta del proyecto:
+
+```powershell
+.\scripts\registrar_tarea.ps1               # todos los días a las 15:00
+.\scripts\registrar_tarea.ps1 -Hora "16:30" # otra hora
+```
+
+Cada día la tarea baja el paquete, lo controla, lo guarda y sube los Parquet a los Releases del repo. Si algo falla, muestra una ventana de aviso.
 
 | Qué | Dónde |
 |---|---|
-| Parquet diarios (~17 MB por día) | Archivos de un Release por mes: `datos-2026-11`, `datos-2026-12`... |
-| Logs de ingesta y de calidad | En el repo, commiteados por el workflow |
+| Parquet diarios (~17 MB por día) | Un Release por mes: `datos-2026-11`, `datos-2026-12`... |
+| Logs de ingesta y de calidad | Release `datos-logs` (se reemplazan en cada corrida) |
+| Resultado de la última ejecución | `data/ingesta/ultima_ejecucion.log` (en tu PC) |
 
-Si algo falla (error de calidad, portal sin datos, descarga rota), la corrida queda en rojo y GitHub avisa por mail.
-Para recibir el aviso: *Settings → Notifications → Actions* y activar *Send notifications for failed workflows only*.
-
-Comandos para trabajar con los Releases desde tu PC (requieren la [CLI de GitHub](https://cli.github.com) y `gh auth login`):
+La PC no tiene que estar prendida siempre: el portal guarda los últimos 7 días, así que podés apagarla hasta 6 días seguidos sin perder datos.
+Si la tarea se perdió la hora, corre apenas la prendés.
 
 | Comando | Qué hace |
 |---|---|
-| `python -m src.almacen subir` | Sube a los Releases los días de `data/` que falten. |
-| `python -m src.almacen subir --forzar` | Reemplaza lo ya subido (por ejemplo, tras reprocesar un día). |
-| `python -m src.almacen bajar --dias 10` | Baja los últimos días que no estén en `data/`. |
+| `python -m src.diaria` | Lo que hace la tarea: bajar, ingerir y subir. |
+| `Start-ScheduledTask -TaskName "Monitor precios supermercados"` | Lanza la tarea ahora. |
+| `Unregister-ScheduledTask -TaskName "Monitor precios supermercados" -Confirm:$false` | La saca del Programador. |
+| `python -m src.almacen subir` / `bajar --dias 10` | Sube o baja los Parquet y los logs a mano. |
 | `python -m src.ingesta --verificar-acceso` | Prueba que se pueda llegar al portal. |
 
-Los workflows instalan solo `requirements-pipeline.txt` (DuckDB y pytest). El resto de `requirements.txt` es para los notebooks.
+Los tests de GitHub instalan solo `requirements-pipeline.txt` (DuckDB y pytest). El resto de `requirements.txt` es para los notebooks.
