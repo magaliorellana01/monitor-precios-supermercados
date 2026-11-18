@@ -93,7 +93,8 @@ def contenido_comercio(id_comercio: int, sucursales: list[dict], productos: list
          "id_producto": p["id_producto"], "productos_ean": p.get("ean", 1),
          "productos_descripcion": p.get("descripcion", "PRODUCTO " + p["id_producto"]),
          "productos_cantidad_presentacion": p.get("cantidad"), "productos_unidad_medida_presentacion": p.get("unidad"),
-         "productos_marca": p.get("marca"), "productos_precio_lista": p["precio"]}
+         "productos_marca": p.get("marca"), "productos_precio_lista": p["precio"],
+         "productos_precio_unitario_promo1": p.get("promo1")}
         for p in productos
     ]
     columnas_productos = [c for c in COLUMNAS_PRODUCTOS if c not in sin_columnas_productos]
