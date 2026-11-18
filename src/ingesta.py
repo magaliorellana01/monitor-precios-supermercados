@@ -9,6 +9,7 @@ Uso:
     python -m src.ingesta --archivo x.zip       # un zip ya descargado (no descarga nada)
     python -m src.ingesta --forzar              # reprocesa aunque la fecha ya esté guardada
     python -m src.ingesta --aceptar-errores     # guarda el día aunque los controles de calidad den error
+    python -m src.ingesta --verificar-acceso    # solo prueba que se pueda llegar al portal
 
 Antes de guardar cada día se corren los controles de src/calidad.py. Si alguno da error grave,
 ese día no se guarda y el proceso termina con código de salida 1.
@@ -356,8 +357,36 @@ def controlar_portal(paquetes: list[Paquete]) -> bool:
     return True
 
 
+def verificar_acceso() -> bool:
+    """Prueba que se pueda llegar al portal: consulta la API y pide los primeros bytes del último zip.
+
+    Sirve para saber, desde GitHub Actions, si el servidor bloquea las IP del exterior (docs/fuente_sepa.md).
+    """
+    try:
+        inicio = time.perf_counter()
+        paquetes = listar_paquetes()
+        log.info("API del portal: OK (%d paquetes, %.1f s)", len(paquetes), time.perf_counter() - inicio)
+        ultimo = paquetes[-1]
+        pedido = urllib.request.Request(ultimo.url, headers={"User-Agent": USER_AGENT, "Range": "bytes=0-1023"})
+        inicio = time.perf_counter()
+        with urllib.request.urlopen(pedido, timeout=60) as r:
+            inicio_archivo = r.read(4)
+            estado = r.status
+        if inicio_archivo[:2] != b"PK":
+            log.error("El servidor respondió (HTTP %s) pero no entregó un zip", estado)
+            return False
+        log.info("Descarga de sepa_%s (%s): OK (HTTP %s, %.1f s)", ultimo.dia, ultimo.fecha_estimada,
+                 estado, time.perf_counter() - inicio)
+        return True
+    except OSError as e:  # incluye errores HTTP (403, 429...), de conexión y de tiempo de espera
+        log.error("No se pudo acceder al portal: %s", e)
+        return False
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--verificar-acceso", action="store_true",
+                        help="solo probar que se puede acceder al portal; no descarga ni guarda nada")
     grupo = parser.add_mutually_exclusive_group()
     grupo.add_argument("--dia", choices=DIAS_SEMANA, help="procesar solo el paquete de este día de la semana")
     grupo.add_argument("--archivo", type=Path, help="procesar un zip ya descargado")
@@ -370,6 +399,9 @@ def main(argv: list[str] | None = None) -> int:
                         datefmt="%H:%M:%S", stream=sys.stdout)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
+
+    if args.verificar_acceso:
+        return 0 if verificar_acceso() else 1
 
     if args.archivo:
         try:
