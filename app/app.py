@@ -23,7 +23,7 @@ REPO = "magaliorellana01/monitor-precios-supermercados"
 URL_BASE = f"https://github.com/{REPO}/releases/download/datos-dashboard/dashboard.duckdb"
 RUTA_LOCAL = Path(os.environ.get("DASHBOARD_DB") or Path(__file__).resolve().parent.parent / "data" / "dashboard" / "dashboard.duckdb")
 
-COLOR, RESALTADO = "#4C78A8", "#E45756"
+COLOR, RESALTADO, VERDE = "#4C78A8", "#E45756", "#2E9E5B"  # VERDE: la cadena más barata
 ZONAS = {"TODAS": "CABA y GBA", "CABA": "CABA", "GBA": "GBA"}
 MIN_CADENAS_MARCA = 5
 MIN_FILAS_PROMO = 1000
@@ -113,7 +113,7 @@ with tab_resumen:
         t["etiqueta"] = [peso(c) + ("" if p == 1 else f"  ({pct(s, True)})") for c, p, s in
                          zip(t["costo"], t["posicion"], t["sobre_la_mas_barata_pct"])]
         fig = px.bar(t, x="costo", y="cadena", orientation="h", color="color", text="etiqueta",
-                     color_discrete_map={"Más barata": RESALTADO, "Otras": COLOR},
+                     color_discrete_map={"Más barata": VERDE, "Otras": COLOR},
                      labels={"costo": "Costo de la canasta ($)", "cadena": "", "color": ""})
         fig.update_traces(textposition="outside", cliponaxis=False)
         fig.update_layout(showlegend=False, height=420, margin=dict(l=0, r=40, t=10, b=0),

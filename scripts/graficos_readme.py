@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 RAIZ = Path(__file__).resolve().parent.parent
 BASE = RAIZ / "data" / "dashboard" / "dashboard.duckdb"
 SALIDA = RAIZ / "docs" / "img"
-COLOR, RESALTADO = "#4C78A8", "#E45756"
+COLOR, RESALTADO, VERDE = "#4C78A8", "#E45756", "#2E9E5B"  # VERDE: la cadena más barata
 
 plt.rcParams.update({"figure.dpi": 130, "axes.spines.top": False, "axes.spines.right": False, "font.size": 10})
 
@@ -34,7 +34,7 @@ def ranking_canasta(con) -> Path:
     """).df()
     fecha = t["fecha"].iloc[0]
     fig, ax = plt.subplots(figsize=(7.5, 4.2))
-    ax.barh(t["cadena"], t["costo"], color=[RESALTADO if p == 1 else COLOR for p in t["posicion"]])
+    ax.barh(t["cadena"], t["costo"], color=[VERDE if p == 1 else COLOR for p in t["posicion"]])
     for y, (costo, sobre) in enumerate(zip(t["costo"], t["sobre"])):
         ax.text(costo, y, f"  ${costo:,.0f}".replace(",", ".") + ("" if sobre == 0 else f"  (+{sobre:.1f}%)".replace(".", ",")),
                 va="center", fontsize=8)
