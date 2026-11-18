@@ -24,3 +24,4 @@ data/calidad/
 
 # Datos de fuentes externas (IPC): se vuelven a bajar con python -m src.ipc
 data/externos/
+data/dashboard/
