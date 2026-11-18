@@ -49,8 +49,8 @@ flowchart LR
 
 ## Estado
 
-- [ ] Etapa 0: reconocimiento de la base SEPA
-- [ ] Etapa 1: pipeline de descarga
+- [x] Etapa 0: reconocimiento de la base SEPA ([documentación de la fuente](docs/fuente_sepa.md))
+- [x] Etapa 1: pipeline de descarga
 - [ ] Etapa 2: controles de calidad
 - [ ] Etapa 3: automatización con GitHub Actions
 - [ ] Etapa 4: modelo de datos en SQL
@@ -67,4 +67,23 @@ flowchart LR
 
 ## Cómo correrlo en local
 
-*Pendiente: se completa cuando esté lista la etapa 1.*
+Requiere Python 3.11 o más nuevo.
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate          # en Linux o macOS: source .venv/bin/activate
+pip install -r requirements.txt
+
+python -m src.ingesta           # descarga y guarda los días disponibles que falten (hasta 7)
+```
+
+Otras opciones:
+
+| Comando | Qué hace |
+|---|---|
+| `python -m src.ingesta --dia lunes` | Procesa solo el paquete de ese día de la semana. |
+| `python -m src.ingesta --archivo sepa_lunes.zip` | Procesa un zip ya descargado. |
+| `python -m src.ingesta --forzar` | Reprocesa aunque la fecha ya esté guardada. |
+
+Cada día procesado queda en `data/<tabla>/fecha=AAAA-MM-DD/<tabla>.parquet` (precios, sucursales, comercios y productos),
+y el resumen de cada corrida en `data/ingesta/log_ingesta.csv`.

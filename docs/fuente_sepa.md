@@ -175,5 +175,17 @@ ronda los 10 comercios. Hay suficientes productos comunes para armar una canasta
 
 - **Acceso desde GitHub Actions:** falta confirmar que el servidor no bloquea IPs del exterior. Se prueba con
   un workflow manual al empezar la etapa 3. Si lo bloquea, la alternativa es un runner propio o descargar desde una PC.
-- **Estabilidad en el tiempo:** comparar varios días para ver si cambian los comercios presentes, el comercio 36
-  vuelve a publicar o el 47 se actualiza.
+## Estabilidad entre días (primeros 7 días, 12 al 18/11/2026)
+
+La primera corrida de la ingesta recuperó los 7 paquetes disponibles. Esto es lo que se vio:
+
+- **Hay cadenas enteras que faltan algunos días.** Su zip directamente no viene en el paquete:
+  - 12/11: falta **Cencosud** (Vea, Disco, Jumbo).
+  - 18/11: falta **Farmacity/Simplicity**.
+- El comercio 36 vino vacío y el 47 desactualizado **los 7 días**.
+- Fuera de esas ausencias, la cantidad de sucursales por bandera es estable de un día a otro.
+- Cada día procesado ocupa entre 15 y 17 MB en Parquet.
+
+Consecuencias:
+- **Etapa 2:** el control de "cadena que dejó de informar" es necesario, pero tiene que ser una **advertencia**, no un error: pasa seguido y no es un problema de la ingesta.
+- **Etapa 4:** una comparación diaria entre cadenas no puede asumir que todas están todos los días. Hay que decidir si se usa el último precio conocido (con un máximo de días) o si se comparan solo los días en que están todas.
