@@ -88,7 +88,7 @@ Si la tarea se perdió la hora, corre apenas la prendés.
 | `python -m src.almacen subir-dashboard` | Sube la base del dashboard al Release `datos-dashboard`. |
 | `python -m src.ingesta --verificar-acceso` | Prueba que se pueda llegar al portal. |
 
-Los tests de GitHub instalan solo `requirements-pipeline.txt` (DuckDB y pytest). El resto de `requirements.txt` es para los notebooks.
+Los tests de GitHub instalan solo `requirements-pipeline.txt` (DuckDB, pandas y pytest). El resto de `requirements.txt` es para los notebooks y el dashboard.
 
 ## Modelo de datos
 

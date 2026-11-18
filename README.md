@@ -93,7 +93,7 @@ Cada decisión está en [`docs/decisiones.md`](docs/decisiones.md), con las alte
 - [x] Etapa 0: reconocimiento de la base SEPA ([documentación de la fuente](docs/fuente_sepa.md))
 - [x] Etapa 1: pipeline de descarga
 - [x] Etapa 2: controles de calidad
-- [ ] Etapa 3: automatización de la descarga diaria (funcionando; falta confirmar 3 días seguidos sin fallas)
+- [x] Etapa 3: automatización de la descarga diaria
 - [x] Etapa 4: modelo de datos en SQL
 - [x] Etapa 5: análisis
 - [x] Etapa 6: dashboard
