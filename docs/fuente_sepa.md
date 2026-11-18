@@ -151,7 +151,8 @@ ronda los 10 comercios. Hay suficientes productos comunes para armar una canasta
 - Casi todas vienen de **DIA** (22,5% de sus filas con promo1) y de la **Cooperativa Obrera** (16,6%).
   Carrefour 4,9%, La Anónima 2,1%, Coto 0,8%. **La mitad de los comercios no informa ninguna promoción.**
 - Las leyendas son texto libre y no siempre traen la vigencia.
-- Por lo tanto, el análisis de promociones solo es viable para DIA y la Cooperativa Obrera.
+- Por lo tanto, el análisis de promociones solo es viable para las cadenas que las informan. En la etapa 5 resultó que, por volumen, alcanzan DIA, los cuatro formatos de Carrefour y Coto
+  (la Cooperativa Obrera y La Anónima tienen muy pocas filas por tener pocas sucursales en la zona).
 
 ## Problemas de calidad encontrados
 

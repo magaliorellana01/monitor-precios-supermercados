@@ -341,3 +341,29 @@ Solo hay prima si la cadena vende los dos productos ese día.
   identificable en Carrefour y en La Anónima. Queda para una segunda vuelta, y la estructura de `marcas.csv` ya admite agregar esos pares.
 - **Papel higiénico** (Higienol contra Elite): se probó y se sacó, porque Elite cuesta el doble y no es un producto equivalente.
 - **Comparar precio por unidad de medida** para emparejar presentaciones distintas: el contenido de `dim_producto` no es confiable cuando varias cadenas informan "1 unidad" para todo.
+
+---
+
+## 16. Análisis: qué se compara, con qué mínimos y cómo se miden las promociones
+
+**Decisión:** el análisis (`notebooks/01_analisis.ipynb`) no calcula nada: corre las consultas de `sql/05_analisis/` sobre las métricas del modelo, una por pregunta, y las grafica.
+- **Dispersión por producto:** mediana de los días del rango entre la cadena más cara y la más barata, solo productos de la canasta y solo si al menos 5 cadenas los comparan (`min_cadenas_dispersion`).
+- **Cadenas y zonas:** el mismo criterio de la decisión 12. Se compara la misma cadena entre CABA y GBA para ver si la zona cambia el precio.
+- **Prima de marca:** mediana entre cadenas y días, solo para categorías con al menos 5 cadenas.
+- **IPC:** se baja con `python -m src.ipc` desde la API de ArgentinaDatos a `data/externos/ipc.csv` (fuera de git, se vuelve a bajar). Es mensual, así que la comparación con el índice propio necesita al menos un mes de historia y por ahora solo se muestra el contexto.
+- **Promociones:** se mira solo la promoción general (promo1) menor al precio de lista, en cadenas con al menos 1.000 filas en promoción el último día. La **promoción permanente** es un producto en una sucursal que estuvo en promoción todos los días en que se lo observó, con al menos 3 días observados. Se calcula sobre los productos que estuvieron en promoción algún día.
+
+**Por qué:**
+- Las consultas en SQL y no en pandas, como el resto del proyecto, para que cualquier gráfico del dashboard (etapa 6) y del reporte (etapa 7) pueda reutilizarlas.
+- Los mínimos evitan sacar conclusiones de un puñado de casos (Cooperativa Obrera y La Anónima quedan fuera del análisis de promociones por eso).
+- "Promoción permanente" es una aproximación: con 7 días de historia no se puede distinguir una oferta larga de un precio de lista disfrazado. Cuando haya más semanas se podrá mirar si la lista sube cuando entra la promoción.
+
+**Qué se encontró (7 días, no son conclusiones definitivas):**
+- La misma cadena cobra igual en CABA y en GBA (diferencia de 0 a −0,3%): lo que cambia el precio es la cadena, no la zona.
+- Productos de la canasta: entre 1,6% y 47% de diferencia entre la cadena más cara y la más barata, según el producto.
+- Las promociones informadas tienen descuentos medianos de 20% a 25%, y entre el 16% y el 58% de los productos en promoción la mantienen todos los días de la semana.
+
+**Descartado:**
+- *Hacer el cálculo en el notebook con pandas:* duplicaría lógica que ya está en el modelo.
+- *Concluir sobre el IPC con 7 días:* el IPC es mensual y la comparación sería ruido.
+
