@@ -6,6 +6,7 @@ Hace, en orden:
     1. Baja de los Releases lo que falte en data/ (útil si se cambió de PC o se borró la carpeta).
     2. Corre la ingesta: descarga los días nuevos, los controla y los guarda.
     3. Sube a los Releases los días nuevos y los logs.
+    4. Actualiza el modelo (data/modelo.duckdb) con los días nuevos.
 
 Si la ingesta falla, igual sube lo que haya salido bien y los logs (con el motivo del error), y termina con
 código de salida 1. Todo lo que se imprime queda también en data/ingesta/ultima_ejecucion.log.
@@ -18,7 +19,7 @@ from __future__ import annotations
 import logging
 import sys
 
-from . import almacen, ingesta
+from . import almacen, ingesta, modelo
 
 DIAS_A_BAJAR = 10
 
@@ -52,6 +53,14 @@ def main() -> int:
         almacen.subir()
     except (almacen.ErrorGh, OSError) as e:
         log.error("No se pudo subir a los Releases (¿`gh auth login`?): %s", e)
+        codigo = 1
+
+    # El modelo va al final: tarda más y no es crítico. Los datos ya quedaron guardados y subidos.
+    try:
+        if modelo.ejecutar() != 0:
+            codigo = 1
+    except Exception as e:  # noqa: BLE001 - cualquier falla del modelo se informa pero no pierde datos
+        log.error("No se pudo actualizar el modelo: %s", e)
         codigo = 1
 
     log.info("Ejecución diaria terminada con código %d", codigo)
