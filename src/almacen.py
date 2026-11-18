@@ -24,6 +24,7 @@ from pathlib import Path
 from . import calidad, ingesta
 
 TABLAS = tuple(ingesta.TABLAS.values())  # precios, sucursales, comercios, productos
+TAG_DASHBOARD = "datos-dashboard"  # un solo Release con la base chica que lee el dashboard (se reemplaza en cada subida)
 TAG_LOGS = "datos-logs"  # un solo Release con la última versión de cada log (se reemplaza en cada subida)
 
 log = logging.getLogger("almacen")
@@ -144,6 +145,25 @@ def subir_logs() -> None:
     log.info("Logs subidos al Release %s", TAG_LOGS)
 
 
+def subir_dashboard(ruta: Path | None = None) -> None:
+    """Sube la base del dashboard (src.exportar) al Release `datos-dashboard`, reemplazando la anterior.
+
+    De ahí la baja la app de Streamlit: el repo es público y el archivo pesa unos cientos de KB.
+    """
+    from . import exportar
+
+    ruta = ruta or exportar.RUTA_DASHBOARD
+    if not ruta.exists():
+        raise FileNotFoundError(f"No existe {ruta}: primero hay que correr python -m src.exportar")
+    if archivos_del_release(TAG_DASHBOARD) is None:
+        log.info("Creando el Release %s", TAG_DASHBOARD)
+        gh("release", "create", TAG_DASHBOARD, "--title", "Base del dashboard",
+           "--notes", "Métricas ya calculadas que lee el dashboard. Se reemplaza en cada corrida diaria.",
+           "--latest=false")
+    gh("release", "upload", TAG_DASHBOARD, str(ruta), "--clobber")
+    log.info("Base del dashboard subida al Release %s", TAG_DASHBOARD)
+
+
 def bajar_logs() -> None:
     """Restaura los logs que falten en data/ (por ejemplo, en una PC nueva). No pisa los que ya están."""
     faltan = {n: r for n, r in rutas_logs().items() if not r.exists()}
@@ -228,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     p_bajar.add_argument("--dias", type=int, default=10, help="cuántos días hacia atrás (por defecto 10)")
     p_subir = sub.add_parser("subir", help="sube a los Releases los días que falten")
     p_subir.add_argument("--forzar", action="store_true", help="reemplazar lo que ya está subido")
+    sub.add_parser("subir-dashboard", help="sube la base del dashboard (python -m src.exportar) al Release datos-dashboard")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
@@ -235,6 +256,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.orden == "bajar":
             bajar(args.dias)
+        elif args.orden == "subir-dashboard":
+            subir_dashboard()
         else:
             subir(args.forzar)
     except (ErrorGh, FileNotFoundError) as e:

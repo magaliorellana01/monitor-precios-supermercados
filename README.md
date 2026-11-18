@@ -55,7 +55,7 @@ flowchart LR
 - [ ] Etapa 3: automatización de la descarga diaria
 - [x] Etapa 4: modelo de datos en SQL
 - [x] Etapa 5: análisis ([notebook](notebooks/01_analisis.ipynb); las conclusiones sobre el tiempo esperan a tener más semanas de datos)
-- [ ] Etapa 6: dashboard
+- [x] Etapa 6: dashboard (falta publicarlo en Streamlit Cloud)
 - [ ] Etapa 7: reporte semanal automático
 
 ## Limitaciones conocidas
@@ -150,6 +150,7 @@ Si la tarea se perdió la hora, corre apenas la prendés.
 | `Start-ScheduledTask -TaskName "Monitor precios supermercados"` | Lanza la tarea ahora. |
 | `Unregister-ScheduledTask -TaskName "Monitor precios supermercados" -Confirm:$false` | La saca del Programador. |
 | `python -m src.almacen subir` / `bajar --dias 10` | Sube o baja los Parquet y los logs a mano. |
+| `python -m src.almacen subir-dashboard` | Sube la base del dashboard al Release `datos-dashboard`. |
 | `python -m src.ingesta --verificar-acceso` | Prueba que se pueda llegar al portal. |
 
 Los tests de GitHub instalan solo `requirements-pipeline.txt` (DuckDB y pytest). El resto de `requirements.txt` es para los notebooks.
@@ -168,7 +169,7 @@ Genera `data/modelo.duckdb`. Todas las transformaciones están en SQL, en la car
 | `01_staging` | Vistas temporales sobre los Parquet y los archivos de `config/` |
 | `02_dimensiones` | `dim_fecha`, `dim_cadena`, `dim_sucursal`, `dim_producto`, `dim_canasta`, `dim_par_marca`, `parametros` |
 | `03_hechos` | `fct_precios` (sucursal, producto y día), `fct_precio_representativo` (mediana por cadena, zona y día), `fct_cobertura_dia` |
-| `04_metricas` | `m_canasta_dia`, `m_ranking_canasta_dia`, `m_indice_cadena_dia`, `m_indice_general_dia`, `m_dispersion_producto_dia`, `m_prima_marca_dia` |
+| `04_metricas` | `m_canasta_dia`, `m_ranking_canasta_dia`, `m_indice_cadena_dia`, `m_indice_general_dia`, `m_dispersion_producto_dia`, `m_prima_marca_dia`, `m_promo_cadena_dia` |
 
 Los hechos son incrementales: cada día se carga una sola vez, y se vuelve a cargar si su Parquet se reprocesó.
 
@@ -191,6 +192,19 @@ order by posicion;
 ```
 
 Las decisiones de diseño (qué es una cadena, cómo se eligió la canasta, cómo se calcula el índice) están en `docs/decisiones.md`, decisiones 11 a 15.
+
+### Dashboard
+
+```
+python -m src.exportar          # arma data/dashboard/dashboard.duckdb (unos 3 MB) desde el modelo
+streamlit run app/app.py        # lo abre en el navegador
+```
+
+El dashboard no calcula nada: muestra las métricas del modelo (ranking de la canasta, dispersión por producto, prima de marca, índice contra IPC y promociones), con un filtro de zona.
+Lee `data/dashboard/dashboard.duckdb`; si no está en la PC (como en Streamlit Cloud), la baja del Release `datos-dashboard` y la renueva cada hora.
+La tarea diaria lo mantiene al día: después de actualizar el modelo baja el IPC, arma esa base y la sube al Release (decisión 17).
+
+Para publicarlo (una sola vez): en [share.streamlit.io](https://share.streamlit.io) crear una app con este repositorio, rama `main` y archivo `app/app.py`.
 
 ### Análisis
 

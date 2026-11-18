@@ -367,3 +367,29 @@ Solo hay prima si la cadena vende los dos productos ese día.
 - *Hacer el cálculo en el notebook con pandas:* duplicaría lógica que ya está en el modelo.
 - *Concluir sobre el IPC con 7 días:* el IPC es mensual y la comparación sería ruido.
 
+---
+
+## 17. Dashboard: una base chica en un Release, y un filtro de zona
+
+**Decisión:** el dashboard (`app/app.py`, Streamlit) no lee el modelo: lee `dashboard.duckdb`, que arma `python -m src.exportar` con las métricas ya calculadas
+(unos 3 MB con 7 días), y que la tarea diaria sube al Release `datos-dashboard`. La app usa la copia local si existe y, si no, la baja de ese Release y la renueva cada hora.
+- **Contenido:** las tablas `m_*` que muestra, `dim_canasta`, `dim_par_marca`, el precio por cadena de los productos de la canasta, el IPC y una tabla `meta` con la fecha de generación.
+- **Secciones:** resumen, canasta, productos, marcas, inflación, promociones y metodología. Un solo filtro, la zona.
+- **Promociones por día:** nueva métrica `m_promo_cadena_dia` (porcentaje de precios en promoción y descuento mediano por cadena y día).
+  La "promoción permanente" de la decisión 16 queda solo en el notebook, porque se calcula sobre toda la ventana.
+
+**Por qué:**
+- `modelo.duckdb` pesa 425 MB y no se puede subir a git ni a Streamlit Cloud. Las métricas, que son lo que se muestra, pesan menos del 1%.
+- El repositorio es público, así que la app baja el Release sin credenciales. Es el mismo mecanismo que ya usan los Parquet y los logs (decisiones 5 y 10), y la tarea diaria corre en la PC con `gh` autenticado.
+- **No se commitea la base a git** para que cada actualización diaria no ensucie la historia ni el árbol de trabajo donde corre la tarea.
+- La app avisa que con menos de 28 días la evolución en el tiempo y el IPC todavía no se pueden leer.
+
+**Limitaciones:**
+- El dashboard se actualiza cuando la PC corre la tarea diaria y sube el archivo; si la PC está apagada, muestra el último día subido (el pie lateral dice cuándo se generó).
+- Streamlit Cloud duerme las apps sin visitas: la primera carga después de un rato puede tardar unos segundos.
+
+**Descartado:**
+- *Commitear la base a git desde la tarea diaria:* mezcla datos con código y obliga a hacer push todos los días.
+- *Subir `modelo.duckdb` o los Parquet y calcular en la app:* son cientos de MB y la app tendría que repetir el modelo.
+- *Un workflow de GitHub Actions que arme el dashboard:* Actions no puede descargar la fuente (decisión 10) y tampoco tiene el historial.
+
