@@ -61,9 +61,9 @@ reduce el tamaño a la mitad (de 15 a 7 MB por día), así que no cambia la deci
 
 ---
 
-## 5. Almacenamiento: los datos diarios fuera de git *(propuesta, a confirmar en la etapa 3)*
+## 5. Almacenamiento: los datos diarios fuera de git *(confirmada el 18/11/2026; se implementa en la etapa 3)*
 
-**Decisión propuesta:**
+**Decisión:**
 - **Detalle diario** (precios por sucursal y producto de CABA + GBA, ~15 MB por día en Parquet zstd) → se guarda como
   **archivo adjunto de un Release de GitHub**, un archivo por día. No pesa en el repo y se puede bajar con una URL.
 - **Tablas de productos y sucursales** → también en el Release, actualizadas en cada corrida.
@@ -99,3 +99,66 @@ Las promociones se informan de forma muy desigual (DIA el 22%, la mitad de los c
 (`productos_ean = 0`) solo sirven dentro de un comercio.
 
 **Descartado:** emparejar productos por descripción, que es texto libre y distinto en cada cadena.
+
+---
+
+## 8. Limpieza de precios: qué se descarta antes de guardar
+
+**Decisión:** antes de guardar un día se descartan, en `sql/ingesta/04_precios.sql`, las filas con:
+
+| Motivo | Regla |
+|---|---|
+| `precio_vacio` | `productos_precio_lista` vacío o no numérico. |
+| `precio_cero_o_negativo` | Precio de lista menor o igual a cero. |
+| `duplicado` | Misma sucursal y producto repetidos: se guarda una sola fila, la de menor precio válido. |
+| `precio_absurdo` | Más de 100 veces o menos de 1/100 de la **mediana del producto** ese día. |
+
+La mediana se calcula por EAN entre todas las cadenas. Para los códigos internos (`productos_ean = 0`), que
+solo son únicos dentro de un comercio, se calcula por comercio y código.
+
+**Por qué:**
+- El plan sugería un tope fijo, pero en la etapa 0 vimos que 332 precios superan los 5 millones y la mayoría son
+  televisores y otra electrónica. Con un tope fijo se descartarían precios reales. Comparar contra la mediana del propio producto separa los dos casos.
+- Con datos reales (12 al 18/11/2026) se descartan entre 117 y 191 filas por día, menos del 0,003% de lo guardado.
+  Las 117 "absurdas" son siempre las mismas: un producto de la Cooperadora Deheza (comercio 3) a $0,01 contra una mediana de $6.349.
+- Se descarta en lugar de corregir: no hay forma de saber cuál es el precio correcto.
+
+**Descartado:**
+- *Tope fijo de precio:* descarta electrónica real.
+- *Detectar valores extremos con desvío estándar o rangos intercuartílicos:* con pocos precios por producto (muchos están en una sola cadena) se vuelve inestable. Con la mediana alcanza y se explica en una línea.
+- *Descartar los productos de una sola sucursal:* no tienen mediana contra la que comparar, pero un precio solo no es sospechoso por eso. Esos precios se guardan.
+
+**Limitación:** un producto informado en una sola sucursal nunca se marca como absurdo, porque la mediana es él mismo.
+
+---
+
+## 9. Controles de calidad: umbrales y qué frena el proceso
+
+**Decisión:** los controles dan tres resultados. Los umbrales están en `src/calidad.py` y la tabla completa en el README.
+
+- **Error grave:** el día no se guarda y el comando termina con código de salida 1. Se reserva para lo que
+  indica que los datos no sirven: cambió el formato (faltan columnas), el archivo es viejo o no es del día que dice, el día queda
+  sin precios, más del 1% de precios inválidos, duplicados o absurdos, más del 5% de precios de sucursales que no existen,
+  más del 20% de las sucursales sin precios, una caída de filas de más del 30% frente al día anterior, o un portal sin datos de hoy ni de ayer.
+- **Advertencia:** el día se guarda y el aviso queda en `data/calidad/log_calidad.csv`. Incluye una caída de filas de más del 10%,
+  una cadena que informó ayer y hoy no, o una cadena que informa menos de la mitad de sus sucursales.
+- Todos los resultados (también los `ok`) se registran, para poder ver cómo evolucionan.
+
+**Por qué:**
+- **Una cadena que falta es advertencia, no error.** En los primeros 7 días ya faltó Cencosud un día (12/11) y Farmacity otro (18/11).
+  Frenar la ingesta cada vez dejaría días sin guardar por un problema que no es de nuestro pipeline, y el portal pisa los archivos a la semana.
+- **Los umbrales salen de los datos.** La variación diaria de filas en los primeros días fue de -5,7% a +4,5%. Por eso 10% avisa y 30% frena: queda lejos del ruido normal pero detecta una descarga rota.
+- **El control de columnas se corre antes que el resto.** Si falta una columna, el SQL de la ingesta ni siquiera puede ejecutarse. Este error frena incluso con `--aceptar-errores`.
+- **`--aceptar-errores`** existe como salida de emergencia: si una caída de más del 30% es real (por ejemplo, un feriado), sin esta opción el pipeline fallaría todos los días y se perderían datos.
+- **La fecha esperada sale del portal y no del reloj.** Un zip viejo es consistente consigo mismo (su carpeta y su metadata coinciden), así que solo
+  se detecta comparando contra la fecha de publicación que informa la API y contra el día de la semana. Para el caso de que el portal directamente no
+  publique, hay un control aparte (`portal_actualizado`) que compara el último paquete con la fecha de hoy en Argentina.
+
+**Descartado:**
+- *Frenar siempre ante cualquier cadena ausente:* ver arriba.
+- *Que los avisos solo se muestren por pantalla:* en GitHub Actions nadie los ve. Quedan en un CSV versionado.
+- *Umbrales distintos por cadena:* más precisos, pero hay que mantenerlos a mano. Se puede retomar si los avisos molestan.
+
+**Avisos permanentes.** Hoy cuatro avisos aparecen todos los días: los dos comercios descartados (36 y 47), los 117 precios
+absurdos, los 55 mil precios de sucursales que no figuran en `sucursales.csv` y unas 17 sucursales sin precios. Son problemas conocidos de la fuente
+(ver `docs/fuente_sepa.md`). El valor del log está en ver cuándo **cambian**, no en que aparezcan.
