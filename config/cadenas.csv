@@ -1,0 +1,20 @@
+id_comercio,id_bandera,cadena,rubro
+2,1,La Anónima,supermercado
+3,1,Deheza,tienda_de_conveniencia
+4,1,Estación Lima,tienda_de_conveniencia
+9,1,Vea,supermercado
+9,2,Disco,supermercado
+9,3,Jumbo,supermercado
+10,1,Carrefour Hipermercado,supermercado
+10,2,Carrefour Market,supermercado
+10,3,Carrefour Express,supermercado
+10,4,Carrefour Maxi,supermercado
+11,2,Changomas,supermercado
+11,4,Changomas,supermercado
+11,5,Changomas,supermercado
+12,1,Coto,supermercado
+13,1,Cooperativa Obrera,supermercado
+15,1,DIA,supermercado
+23,1,Axion,tienda_de_conveniencia
+24,1,Simplicity,farmacia
+24,2,Farmacity,farmacia
