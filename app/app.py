@@ -102,8 +102,10 @@ with tab_resumen:
         barata, cara = ultimo_ranking.iloc[0], ultimo_ranking.iloc[-1]
         diferencia = 100 * (cara["costo_canasta"] / barata["costo_canasta"] - 1)
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Canasta más barata", barata["cadena"], peso(float(barata["costo_canasta"])), delta_color="off")
-        c2.metric("Canasta más cara", cara["cadena"], peso(float(cara["costo_canasta"])), delta_color="off")
+        c1.metric("Canasta más barata", barata["cadena"])
+        c1.caption(peso(float(barata["costo_canasta"])))
+        c2.metric("Canasta más cara", cara["cadena"])
+        c2.caption(peso(float(cara["costo_canasta"])))
         c3.metric("Diferencia entre extremos", pct(diferencia), help="Cuánto más cuesta la canasta en la cadena más cara que en la más barata.")
         c4.metric("Cadenas comparadas", int(barata["n_cadenas"]))
 

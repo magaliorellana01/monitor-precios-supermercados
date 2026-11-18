@@ -32,6 +32,8 @@ El portal publica los precios del día pero **no guarda el historial**. Por eso 
 - **Reporte semanal:** un Markdown por semana (lunes a domingo) con qué cadena fue la más barata, cómo cambió el ranking y el índice, qué productos subieron y bajaron, las promociones y la calidad de los datos. Se publican en el Release `reportes-semanales`.
 - **Análisis:** [notebook](notebooks/01_analisis.ipynb) que responde las cinco preguntas con consultas SQL de [`sql/05_analisis/`](sql/05_analisis/).
 
+![Dashboard: resumen de la canasta](docs/img/streamlit.png)
+
 ## Preguntas que responde
 
 1. ¿Cuánto cambia el precio del mismo producto según la cadena y la zona?
