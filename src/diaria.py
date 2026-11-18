@@ -8,6 +8,7 @@ Hace, en orden:
     3. Sube a los Releases los días nuevos y los logs.
     4. Actualiza el modelo (data/modelo.duckdb) con los días nuevos.
     5. Baja el IPC, arma la base chica del dashboard y la sube al Release `datos-dashboard`.
+    6. Si terminó una semana (lunes a domingo) y no tiene reporte, lo genera y lo sube al Release `reportes-semanales`.
 
 Si la ingesta falla, igual sube lo que haya salido bien y los logs (con el motivo del error), y termina con
 código de salida 1. Todo lo que se imprime queda también en data/ingesta/ultima_ejecucion.log.
@@ -20,7 +21,7 @@ from __future__ import annotations
 import logging
 import sys
 
-from . import almacen, exportar, ingesta, ipc, modelo
+from . import almacen, exportar, ingesta, ipc, modelo, reporte
 
 DIAS_A_BAJAR = 10
 
@@ -70,8 +71,15 @@ def main() -> int:
             log.warning("No se pudo bajar el IPC: el dashboard usa el último que haya guardado")
         exportar.exportar()
         almacen.subir_dashboard()
+        try:
+            almacen.bajar_logs()  # el reporte resume los controles de calidad: si el log no está en esta PC, se trae
+        except (almacen.ErrorGh, OSError) as e:
+            log.warning("No se pudo traer el log de calidad: %s", e)
+        ruta = reporte.generar_si_corresponde()
+        if ruta is not None:
+            almacen.subir_reporte(ruta)
     except Exception as e:  # noqa: BLE001 - se informa, pero los datos ya están guardados
-        log.error("No se pudo actualizar el dashboard: %s", e)
+        log.error("No se pudo actualizar el dashboard o el reporte: %s", e)
         codigo = 1
 
     log.info("Ejecución diaria terminada con código %d", codigo)

@@ -25,6 +25,7 @@ from . import calidad, ingesta
 
 TABLAS = tuple(ingesta.TABLAS.values())  # precios, sucursales, comercios, productos
 TAG_DASHBOARD = "datos-dashboard"  # un solo Release con la base chica que lee el dashboard (se reemplaza en cada subida)
+TAG_REPORTES = "reportes-semanales"  # un Release con todos los reportes semanales (uno por lunes)
 TAG_LOGS = "datos-logs"  # un solo Release con la última versión de cada log (se reemplaza en cada subida)
 
 log = logging.getLogger("almacen")
@@ -162,6 +163,19 @@ def subir_dashboard(ruta: Path | None = None) -> None:
            "--latest=false")
     gh("release", "upload", TAG_DASHBOARD, str(ruta), "--clobber")
     log.info("Base del dashboard subida al Release %s", TAG_DASHBOARD)
+
+
+def subir_reporte(ruta: Path) -> None:
+    """Sube un reporte semanal (reports/semanal/AAAA-MM-DD.md) al Release `reportes-semanales`, reemplazando el del mismo lunes."""
+    if not ruta.exists():
+        raise FileNotFoundError(f"No existe {ruta}")
+    if archivos_del_release(TAG_REPORTES) is None:
+        log.info("Creando el Release %s", TAG_REPORTES)
+        gh("release", "create", TAG_REPORTES, "--title", "Reportes semanales",
+           "--notes", "Un archivo por semana, con el lunes como nombre. El último es el más reciente.",
+           "--latest=false")
+    gh("release", "upload", TAG_REPORTES, str(ruta), "--clobber")
+    log.info("Reporte %s subido al Release %s", ruta.name, TAG_REPORTES)
 
 
 def bajar_logs() -> None:

@@ -56,7 +56,7 @@ flowchart LR
 - [x] Etapa 4: modelo de datos en SQL
 - [x] Etapa 5: análisis ([notebook](notebooks/01_analisis.ipynb); las conclusiones sobre el tiempo esperan a tener más semanas de datos)
 - [x] Etapa 6: dashboard (falta publicarlo en Streamlit Cloud)
-- [ ] Etapa 7: reporte semanal automático
+- [x] Etapa 7: reporte semanal automático
 
 ## Limitaciones conocidas
 
@@ -205,6 +205,18 @@ Lee `data/dashboard/dashboard.duckdb`; si no está en la PC (como en Streamlit C
 La tarea diaria lo mantiene al día: después de actualizar el modelo baja el IPC, arma esa base y la sube al Release (decisión 17).
 
 Para publicarlo (una sola vez): en [share.streamlit.io](https://share.streamlit.io) crear una app con este repositorio, rama `main` y archivo `app/app.py`.
+
+### Reporte semanal
+
+```
+python -m src.reporte             # la última semana completa (lunes a domingo)
+python -m src.reporte --parcial   # la semana en curso, con los días que haya
+python -m src.reporte --semana 2026-11-16 --sin-subir
+```
+
+Genera `reports/semanal/AAAA-MM-DD.md` (la fecha es el lunes) y lo sube al Release `reportes-semanales`. Cuenta qué cadena fue la más barata, cómo cambió el ranking y el índice frente a la semana anterior,
+qué productos subieron y bajaron, las promociones y la calidad de los datos. Las consultas están en `sql/06_reporte/`.
+La tarea diaria lo genera sola cuando entra el dato del domingo (o la primera vez que corre después), si la semana tiene al menos 5 días con datos (decisión 18).
 
 ### Análisis
 

@@ -393,3 +393,31 @@ Solo hay prima si la cadena vende los dos productos ese día.
 - *Subir `modelo.duckdb` o los Parquet y calcular en la app:* son cientos de MB y la app tendría que repetir el modelo.
 - *Un workflow de GitHub Actions que arme el dashboard:* Actions no puede descargar la fuente (decisión 10) y tampoco tiene el historial.
 
+---
+
+## 18. Reporte semanal: se genera en la PC, en Markdown, y se publica en un Release
+
+**Decisión:** `src/reporte.py` arma un reporte en Markdown por semana (lunes a domingo) a partir de la base del dashboard, con las consultas de `sql/06_reporte/`.
+Lo guarda en `reports/semanal/AAAA-MM-DD.md` (el lunes de la semana) y lo sube al Release `reportes-semanales`. La tarea diaria lo genera sola:
+al terminar el dashboard, mira cuál fue la última semana completa y, si no tiene reporte y tuvo al menos 5 días con datos, lo genera y lo sube.
+- **Contenido:** resumen, costo de la canasta por cadena con su cambio y su puesto anterior, índice, los cinco productos que más subieron y los cinco que más bajaron, promociones y calidad de los datos
+  (días con datos, cadenas comparadas, advertencias de los controles).
+- **Comparación:** contra el cierre de la semana anterior. Si no hay semana anterior (el proyecto recién empieza), contra el primer día de la semana, y el reporte lo dice.
+- **Variación de un producto:** mediana entre cadenas de la variación de su precio, solo con productos informados por al menos 5 cadenas en las dos fechas.
+
+**Por qué:**
+- El plan era un workflow semanal de GitHub Actions. No sirve: Actions no puede bajar los datos (decisión 10) y el modelo está en esta PC. El reporte sale de la misma tarea que ya corre todos los días, así que no hay otra tarea que mantener.
+- **No va a git:** `reports/` está en `.gitignore`. Un archivo nuevo por semana obligaría a hacer commit y push desde la PC donde corre la tarea (decisión 17). Los reportes se leen en el Release.
+- **Se genera cuando entra el dato del domingo,** no a una hora fija: la tarea diaria ya baja ese día, y el reporte sale en esa misma corrida (el domingo a las 15:00). Si la PC estuvo apagada, sale apenas se prende. Una semana con menos de 5 días no sale sola (se puede pedir con `--semana`).
+- **Markdown y no HTML ni PDF:** se lee bien en GitHub y en el Release, y no suma dependencias.
+
+**Limitaciones:**
+- Todavía hay una sola semana completa (la del 16 al 22 de noviembre), así que los cambios semana a semana se verán desde el segundo reporte.
+- El resumen de calidad lee el log de la ingesta: si falta en la PC, lo baja del Release `datos-logs`.
+- La variación de un producto usa la mediana entre cadenas: si solo una cadena cambia el precio, no aparece. Ese cambio se ve en el cambio de costo de la cadena.
+
+**Descartado:**
+- *Workflow semanal en Actions:* no puede bajar la fuente ni tiene el historial.
+- *Commitear el reporte a `reports/` del repositorio:* ver arriba.
+- *Un gráfico por reporte:* con la tabla de ranking alcanza; los gráficos están en el dashboard.
+
