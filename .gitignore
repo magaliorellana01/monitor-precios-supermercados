@@ -12,3 +12,10 @@ data/modelo.duckdb
 
 # Configuración local del editor
 .vscode/
+
+# Datos diarios procesados: no van en git, van a Releases (docs/decisiones.md, decisión 5).
+# El log de la ingesta sí se versiona.
+data/precios/
+data/sucursales/
+data/comercios/
+data/productos/
