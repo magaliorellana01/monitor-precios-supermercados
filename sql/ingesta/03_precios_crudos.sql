@@ -1,6 +1,6 @@
--- Precios del día de las sucursales de la zona. Tabla normalizada: solo ids, precios y promociones.
--- No se limpia nada acá (precios en cero, duplicados): de eso se ocupan los controles de calidad.
-create or replace table precios_dia as
+-- Precios del día de las sucursales de la zona, sin limpiar. Tabla normalizada: solo ids, precios y promociones.
+-- La limpieza (precios inválidos, duplicados, absurdos) está en 04_precios.sql.
+create or replace table precios_crudos_dia as
 select
     p.id_comercio::int                                          as id_comercio,
     p.id_bandera::int                                           as id_bandera,
@@ -17,5 +17,4 @@ join sucursales_dia s
   on s.id_comercio = p.id_comercio::int
  and s.id_bandera  = p.id_bandera::int
  and s.id_sucursal = p.id_sucursal
-where regexp_full_match(p.id_comercio, '[0-9]+')
-order by id_comercio, id_bandera, id_sucursal, id_producto;
+where regexp_full_match(p.id_comercio, '[0-9]+');

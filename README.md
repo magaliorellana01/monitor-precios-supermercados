@@ -51,7 +51,7 @@ flowchart LR
 
 - [x] Etapa 0: reconocimiento de la base SEPA ([documentación de la fuente](docs/fuente_sepa.md))
 - [x] Etapa 1: pipeline de descarga
-- [ ] Etapa 2: controles de calidad
+- [x] Etapa 2: controles de calidad
 - [ ] Etapa 3: automatización con GitHub Actions
 - [ ] Etapa 4: modelo de datos en SQL
 - [ ] Etapa 5: análisis
@@ -84,6 +84,35 @@ Otras opciones:
 | `python -m src.ingesta --dia lunes` | Procesa solo el paquete de ese día de la semana. |
 | `python -m src.ingesta --archivo sepa_lunes.zip` | Procesa un zip ya descargado. |
 | `python -m src.ingesta --forzar` | Reprocesa aunque la fecha ya esté guardada. |
+| `python -m src.ingesta --aceptar-errores` | Guarda el día aunque los controles de calidad den error grave. |
+| `python -m pytest` | Corre los tests. |
 
 Cada día procesado queda en `data/<tabla>/fecha=AAAA-MM-DD/<tabla>.parquet` (precios, sucursales, comercios y productos),
 y el resumen de cada corrida en `data/ingesta/log_ingesta.csv`.
+
+### Controles de calidad
+
+Antes de guardar cada día se corren 13 controles (`src/calidad.py` y `sql/calidad/`). Su resultado queda en
+`data/calidad/log_calidad.csv`, con la columna `resultado` en `ok`, `advertencia` o `error`.
+
+- **Error grave:** el día no se guarda y el comando termina con código de salida 1 (así GitHub Actions marca la corrida como fallida).
+- **Advertencia:** el día se guarda y el aviso queda registrado.
+
+| Control | Qué detecta | Advertencia | Error |
+|---|---|---|---|
+| `columnas_faltantes` | El formato de los CSV cambió | | cualquier columna |
+| `fecha_paquete` | Archivo viejo o fecha distinta a la del portal | | sí |
+| `portal_actualizado` | El portal no publicó datos de hoy ni de ayer | | más de 1 día |
+| `comercios_descartados` | Zip vacío o con datos viejos | cualquiera | |
+| `sin_precios` | El día quedó sin ningún precio | | sí |
+| `precios_invalidos` | Precios vacíos, cero o negativos | cualquiera | más del 1% de las filas |
+| `duplicados` | Misma sucursal y producto repetidos | cualquiera | más del 1% |
+| `precios_absurdos` | Más de 100 veces (o menos de 1/100) de la mediana del producto | cualquiera | más del 1% |
+| `precios_sin_sucursal` | Precios de sucursales que no figuran en `sucursales.csv` | cualquiera | más del 5% |
+| `sucursales_sin_precios` | Sucursales de la zona sin ningún precio | cualquiera | más del 20% |
+| `banderas_sin_comercio` | Precios de una bandera que no figura en `comercio.csv` | cualquiera | |
+| `variacion_filas` | Caída de filas frente al último día guardado | más del 10% | más del 30% |
+| `banderas_ausentes` | Cadenas que informaron el día anterior y hoy no | cualquiera | |
+| `caida_sucursales_bandera` | Cadenas que informan menos de la mitad de sus sucursales | cualquiera | |
+
+Los precios inválidos, duplicados y absurdos se descartan antes de guardar. El criterio completo está en `docs/decisiones.md` (decisiones 8 y 9).
