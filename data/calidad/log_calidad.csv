@@ -1,0 +1,93 @@
+fecha,control,resultado,valor,detalle
+2026-11-12,columnas_faltantes,ok,0.0,-
+2026-11-12,fecha_paquete,ok,,2026-11-12 (jueves)
+2026-11-12,comercios_descartados,advertencia,2,sepa_1_comercio-sepa-47_2026-11-12_09-05-10: datos desactualizados (CSV del 2025-06-11) | sepa_2_comercio-sepa-36_2026-11-12_01-05-07: zip vacío o roto
+2026-11-12,sin_precios,ok,0.0,filas guardadas: 7172102
+2026-11-12,precios_invalidos,ok,0.0,"vacíos: 0, cero o negativos: 0"
+2026-11-12,duplicados,ok,0.0,comercios: -
+2026-11-12,precios_absurdos,advertencia,0.002,"117 de 7,172,219; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-12,precios_sin_sucursal,advertencia,0.402,"54,780 de 13,633,010; comercios: 11"
+2026-11-12,sucursales_sin_precios,advertencia,1.085,"18 de 1,659; comercios: 3, 24, 12, 10"
+2026-11-12,banderas_sin_comercio,ok,0.0,-
+2026-11-12,variacion_filas,ok,,sin día anterior para comparar
+2026-11-12,banderas_ausentes,ok,0.0,-
+2026-11-12,caida_sucursales_bandera,ok,0.0,-
+2026-11-13,columnas_faltantes,ok,0.0,-
+2026-11-13,fecha_paquete,ok,,2026-11-13 (viernes)
+2026-11-13,comercios_descartados,advertencia,2,sepa_1_comercio-sepa-47_2026-11-13_09-05-10: datos desactualizados (CSV del 2025-06-11) | sepa_2_comercio-sepa-36_2026-11-13_01-05-07: zip vacío o roto
+2026-11-13,sin_precios,ok,0.0,filas guardadas: 7580117
+2026-11-13,precios_invalidos,ok,0.0,"vacíos: 0, cero o negativos: 0"
+2026-11-13,duplicados,ok,0.0,comercios: -
+2026-11-13,precios_absurdos,advertencia,0.002,"117 de 7,580,234; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-13,precios_sin_sucursal,advertencia,0.369,"54,982 de 14,900,743; comercios: 9, 11"
+2026-11-13,sucursales_sin_precios,advertencia,0.982,"17 de 1,731; comercios: 3, 24, 10, 12"
+2026-11-13,banderas_sin_comercio,ok,0.0,-
+2026-11-13,variacion_filas,ok,-5.7,"hoy: 7580117 filas, día anterior: 7172102"
+2026-11-13,banderas_ausentes,ok,0.0,-
+2026-11-13,caida_sucursales_bandera,ok,0.0,-
+2026-11-14,columnas_faltantes,ok,0.0,-
+2026-11-14,fecha_paquete,ok,,2026-11-14 (sabado)
+2026-11-14,comercios_descartados,advertencia,2,sepa_1_comercio-sepa-36_2026-11-14_09-05-10: zip vacío o roto | sepa_1_comercio-sepa-47_2026-11-14_09-05-10: datos desactualizados (CSV del 2025-06-11)
+2026-11-14,sin_precios,ok,0.0,filas guardadas: 7586428
+2026-11-14,precios_invalidos,ok,0.0,"vacíos: 0, cero o negativos: 0"
+2026-11-14,duplicados,ok,0.0,comercios: -
+2026-11-14,precios_absurdos,advertencia,0.002,"117 de 7,586,545; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-14,precios_sin_sucursal,advertencia,0.369,"55,057 de 14,920,314; comercios: 9, 11"
+2026-11-14,sucursales_sin_precios,advertencia,1.04,"18 de 1,730; comercios: 3, 24, 10, 12"
+2026-11-14,banderas_sin_comercio,ok,0.0,-
+2026-11-14,variacion_filas,ok,-0.1,"hoy: 7586428 filas, día anterior: 7580117"
+2026-11-14,banderas_ausentes,ok,0.0,-
+2026-11-14,caida_sucursales_bandera,ok,0.0,-
+2026-11-15,columnas_faltantes,ok,0.0,-
+2026-11-15,fecha_paquete,ok,,2026-11-15 (domingo)
+2026-11-15,comercios_descartados,advertencia,2,sepa_2_comercio-sepa-36_2026-11-15_01-05-07: zip vacío o roto | sepa_1_comercio-sepa-47_2026-11-15_09-05-11: datos desactualizados (CSV del 2025-06-11)
+2026-11-15,sin_precios,ok,0.0,filas guardadas: 7584730
+2026-11-15,precios_invalidos,advertencia,0.0,"25 de 7,584,872; vacíos: 25, cero o negativos: 0"
+2026-11-15,duplicados,ok,0.0,comercios: -
+2026-11-15,precios_absurdos,advertencia,0.002,"117 de 7,584,872; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-15,precios_sin_sucursal,advertencia,0.376,"55,205 de 14,692,045; comercios: 11, 9"
+2026-11-15,sucursales_sin_precios,advertencia,0.983,"17 de 1,729; comercios: 24, 3, 10, 12"
+2026-11-15,banderas_sin_comercio,ok,0.0,-
+2026-11-15,variacion_filas,ok,0.0,"hoy: 7584730 filas, día anterior: 7586428"
+2026-11-15,banderas_ausentes,ok,0.0,-
+2026-11-15,caida_sucursales_bandera,ok,0.0,-
+2026-11-16,columnas_faltantes,ok,0.0,-
+2026-11-16,fecha_paquete,ok,,2026-11-16 (lunes)
+2026-11-16,comercios_descartados,advertencia,2,sepa_1_comercio-sepa-47_2026-11-16_09-05-10: datos desactualizados (CSV del 2025-06-11) | sepa_2_comercio-sepa-36_2026-11-16_01-05-08: zip vacío o roto
+2026-11-16,sin_precios,ok,0.0,filas guardadas: 7569397
+2026-11-16,precios_invalidos,advertencia,0.0,"25 de 7,569,539; vacíos: 25, cero o negativos: 0"
+2026-11-16,duplicados,ok,0.0,comercios: -
+2026-11-16,precios_absurdos,advertencia,0.002,"117 de 7,569,539; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-16,precios_sin_sucursal,advertencia,0.371,"55,329 de 14,898,480; comercios: 11, 9"
+2026-11-16,sucursales_sin_precios,advertencia,0.925,"16 de 1,729; comercios: 3, 10, 12"
+2026-11-16,banderas_sin_comercio,ok,0.0,-
+2026-11-16,variacion_filas,ok,0.2,"hoy: 7569397 filas, día anterior: 7584730"
+2026-11-16,banderas_ausentes,ok,0.0,-
+2026-11-16,caida_sucursales_bandera,ok,0.0,-
+2026-11-17,columnas_faltantes,ok,0.0,-
+2026-11-17,fecha_paquete,ok,,2026-11-17 (martes)
+2026-11-17,comercios_descartados,advertencia,2,sepa_2_comercio-sepa-36_2026-11-17_01-05-07: zip vacío o roto | sepa_1_comercio-sepa-47_2026-11-17_09-05-10: datos desactualizados (CSV del 2025-06-11)
+2026-11-17,sin_precios,ok,0.0,filas guardadas: 7228711
+2026-11-17,precios_invalidos,advertencia,0.001,"49 de 7,228,877; vacíos: 49, cero o negativos: 0"
+2026-11-17,duplicados,ok,0.0,comercios: -
+2026-11-17,precios_absurdos,advertencia,0.002,"117 de 7,228,877; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-17,precios_sin_sucursal,advertencia,0.383,"55,356 de 14,453,020; comercios: 11, 9"
+2026-11-17,sucursales_sin_precios,advertencia,1.041,"18 de 1,729; comercios: 10, 12, 3"
+2026-11-17,banderas_sin_comercio,ok,0.0,-
+2026-11-17,variacion_filas,ok,4.5,"hoy: 7228711 filas, día anterior: 7569397"
+2026-11-17,banderas_ausentes,ok,0.0,-
+2026-11-17,caida_sucursales_bandera,ok,0.0,-
+2026-11-18,columnas_faltantes,ok,0.0,-
+2026-11-18,fecha_paquete,ok,,2026-11-18 (miercoles)
+2026-11-18,comercios_descartados,advertencia,2,sepa_1_comercio-sepa-47_2026-11-18_09-05-10: datos desactualizados (CSV del 2025-06-11) | sepa_2_comercio-sepa-36_2026-11-18_01-05-07: zip vacío o roto
+2026-11-18,sin_precios,ok,0.0,filas guardadas: 7340732
+2026-11-18,precios_invalidos,advertencia,0.001,"73 de 7,340,923; vacíos: 73, cero o negativos: 0"
+2026-11-18,duplicados,ok,0.0,comercios: -
+2026-11-18,precios_absurdos,advertencia,0.002,"118 de 7,340,923; mayor desvío: producto 7790742167101 en el comercio 3 a 0.01 (mediana 6349.00)"
+2026-11-18,precios_sin_sucursal,advertencia,0.381,"55,434 de 14,564,882; comercios: 11, 9"
+2026-11-18,sucursales_sin_precios,advertencia,1.255,"19 de 1,514; comercios: 3, 12, 10"
+2026-11-18,banderas_sin_comercio,ok,0.0,-
+2026-11-18,variacion_filas,ok,-1.5,"hoy: 7340732 filas, día anterior: 7228711"
+2026-11-18,banderas_ausentes,advertencia,2.0,"24-1 SIMPLICITY, 24-2 FARMACITY"
+2026-11-18,caida_sucursales_bandera,ok,0.0,-
+2026-11-18,portal_actualizado,ok,0,"último paquete publicado: 2026-11-18, hoy: 2026-11-18"
