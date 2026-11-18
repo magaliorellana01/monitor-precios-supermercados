@@ -54,7 +54,7 @@ flowchart LR
 - [x] Etapa 2: controles de calidad
 - [ ] Etapa 3: automatización de la descarga diaria
 - [x] Etapa 4: modelo de datos en SQL
-- [ ] Etapa 5: análisis
+- [x] Etapa 5: análisis ([notebook](notebooks/01_analisis.ipynb); las conclusiones sobre el tiempo esperan a tener más semanas de datos)
 - [ ] Etapa 6: dashboard
 - [ ] Etapa 7: reporte semanal automático
 
@@ -191,3 +191,13 @@ order by posicion;
 ```
 
 Las decisiones de diseño (qué es una cadena, cómo se eligió la canasta, cómo se calcula el índice) están en `docs/decisiones.md`, decisiones 11 a 15.
+
+### Análisis
+
+```
+python -m src.ipc               # baja el IPC del INDEC a data/externos/ipc.csv
+python -m src.modelo            # actualiza el modelo
+jupyter lab notebooks/01_analisis.ipynb
+```
+
+`notebooks/01_analisis.ipynb` responde las cinco preguntas con las consultas de `sql/05_analisis/`. Los criterios están en la decisión 16.
