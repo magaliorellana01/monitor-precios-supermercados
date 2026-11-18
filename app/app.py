@@ -28,7 +28,7 @@ ZONAS = {"TODAS": "CABA y GBA", "CABA": "CABA", "GBA": "GBA"}
 MIN_CADENAS_MARCA = 5
 MIN_FILAS_PROMO = 1000
 
-st.set_page_config(page_title="Monitor de precios de supermercados", page_icon="🛒", layout="wide")
+st.set_page_config(page_title="Monitor de precios de supermercados", layout="wide")
 
 
 # --------------------------------------------------------------------------- datos
@@ -64,7 +64,7 @@ def pct(x: float, signo: bool = False) -> str:
 try:
     meta = consulta("select * from meta").iloc[0]
 except Exception:  # noqa: BLE001 - sin datos no hay dashboard
-    st.title("🛒 Monitor de precios de supermercados")
+    st.title("Monitor de precios de supermercados")
     st.error("Todavía no hay datos publicados. En la PC: `python -m src.modelo`, `python -m src.exportar` y "
              "`python -c \"from src import almacen; almacen.subir_dashboard()\"`.")
     st.stop()
@@ -80,7 +80,7 @@ with st.sidebar:
     st.caption(f"Actualizado: {meta['generado_en']:%d/%m/%Y %H:%M}.")
     st.caption("Fuente: base SEPA (Precios Claros), precios informados por las cadenas.")
 
-st.title("🛒 Monitor de precios de supermercados")
+st.title("Monitor de precios de supermercados")
 st.caption("Precios que los supermercados informan a SEPA en CABA y GBA. Medianas entre sucursales, canasta fija de 30 productos.")
 if dias < 28:
     st.info(f"Hay {dias} días de historia. Las comparaciones entre cadenas ya se pueden leer; "
