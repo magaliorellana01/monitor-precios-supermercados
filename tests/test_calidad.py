@@ -219,6 +219,17 @@ def test_comercios_descartados():
     assert r.resultado == ADVERTENCIA and r.valor == 2
 
 
+@pytest.mark.parametrize("anterior, esperado, faltan, detalle", [
+    (None, OK, 0, "no hay un día anterior"),
+    (date(2026, 11, 15), OK, 0, "-"),                                    # el día anterior es el 15
+    (date(2026, 11, 14), ADVERTENCIA, 1, "no hay datos guardados 2026-11-15"),
+    (date(2026, 11, 10), ADVERTENCIA, 5, "del 2026-11-11 al 2026-11-15"),
+])
+def test_continuidad_de_los_dias_guardados(anterior, esperado, faltan, detalle):
+    r = calidad.controlar_continuidad(FECHA, anterior)
+    assert r.resultado == esperado and r.valor == faltan and detalle in r.detalle
+
+
 @pytest.mark.parametrize("ultimo, esperado", [
     (date(2026, 11, 18), OK),         # publicó hoy
     (date(2026, 11, 17), OK),         # publicó ayer (todavía no son las 13:20)

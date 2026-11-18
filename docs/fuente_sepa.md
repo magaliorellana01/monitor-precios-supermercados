@@ -173,8 +173,8 @@ ronda los 10 comercios. Hay suficientes productos comunes para armar una canasta
 
 ## Pendiente de verificar
 
-- **Acceso desde GitHub Actions:** falta confirmar que el servidor no bloquea las IP del exterior. Se prueba corriendo a mano el workflow
-  `descarga_diaria` con la opción `solo_conexion`. Si las bloquea, la alternativa es un runner propio (ver `docs/decisiones.md`, decisión 10).
+- **Acceso desde GitHub Actions:** probado el 18/11/2026. **El servidor devuelve HTTP 403 a los runners de GitHub**, también con un User-Agent de
+  navegador. Es un bloqueo por IP, así que la descarga diaria corre desde la PC (`docs/decisiones.md`, decisión 10).
 
 ## Estabilidad entre días (primeros 7 días, 12 al 18/11/2026)
 

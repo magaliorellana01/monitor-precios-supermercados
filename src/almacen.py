@@ -21,9 +21,10 @@ import tempfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import ingesta
+from . import calidad, ingesta
 
 TABLAS = tuple(ingesta.TABLAS.values())  # precios, sucursales, comercios, productos
+TAG_LOGS = "datos-logs"  # un solo Release con la última versión de cada log (se reemplaza en cada subida)
 
 log = logging.getLogger("almacen")
 
@@ -72,6 +73,11 @@ def fechas_locales() -> list[date]:
     return sorted(fechas)
 
 
+def rutas_logs() -> dict[str, Path]:
+    """Los dos logs: nombre del archivo en el Release -> ruta local."""
+    return {"log_ingesta.csv": ingesta.LOG_INGESTA, "log_calidad.csv": calidad.RUTA_LOG}
+
+
 def archivos_del_release(tag: str) -> set[str] | None:
     """Nombres de los archivos de un Release, o None si el Release todavía no existe."""
     try:
@@ -117,7 +123,45 @@ def subir(forzar: bool = False) -> int:
             subidos += 1
     if not subidos:
         log.info("No hay días nuevos para subir")
+    subir_logs()
     return subidos
+
+
+def subir_logs() -> None:
+    """Sube los logs de ingesta y de calidad al Release `datos-logs`, reemplazando la versión anterior.
+
+    Los logs no van en git: la ejecución diaria corre en una carpeta de trabajo donde también se edita código.
+    """
+    existentes_locales = [ruta for ruta in rutas_logs().values() if ruta.exists()]
+    if not existentes_locales:
+        return
+    if archivos_del_release(TAG_LOGS) is None:
+        log.info("Creando el Release %s", TAG_LOGS)
+        gh("release", "create", TAG_LOGS, "--title", "Logs de ingesta y calidad",
+           "--notes", "Última versión de log_ingesta.csv y log_calidad.csv. Se reemplazan en cada corrida.",
+           "--latest=false")
+    gh("release", "upload", TAG_LOGS, *[str(r) for r in existentes_locales], "--clobber")
+    log.info("Logs subidos al Release %s", TAG_LOGS)
+
+
+def bajar_logs() -> None:
+    """Restaura los logs que falten en data/ (por ejemplo, en una PC nueva). No pisa los que ya están."""
+    faltan = {n: r for n, r in rutas_logs().items() if not r.exists()}
+    if not faltan:
+        return
+    existentes = archivos_del_release(TAG_LOGS)
+    if existentes is None:
+        return
+    pedidos = [n for n in faltan if n in existentes]
+    if not pedidos:
+        return
+    with tempfile.TemporaryDirectory(prefix="almacen_") as tmp:
+        patrones = [x for n in pedidos for x in ("--pattern", n)]
+        gh("release", "download", TAG_LOGS, "--dir", tmp, *patrones)
+        for nombre in pedidos:
+            faltan[nombre].parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(Path(tmp) / nombre, faltan[nombre])
+            log.info("Restaurado %s desde el Release %s", nombre, TAG_LOGS)
 
 
 # --------------------------------------------------------------------------- bajar
@@ -171,6 +215,7 @@ def bajar(dias: int, hoy: date | None = None) -> int:
                 bajados += 1
     if not bajados:
         log.info("No hay días para bajar")
+    bajar_logs()
     return bajados
 
 

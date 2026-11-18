@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import duckdb
@@ -70,8 +70,8 @@ CONTROLES = (
 CONTROL_COLUMNAS = Control("columnas_faltantes", "01_columnas_faltantes.sql", "cantidad", None, 0)
 
 # Orden en que se escriben los controles de una misma fecha en el log.
-ORDEN_LOG = (["columnas_faltantes", "fecha_paquete", "comercios_descartados"] + [c.nombre for c in CONTROLES]
-             + ["portal_actualizado"])
+ORDEN_LOG = (["columnas_faltantes", "fecha_paquete", "comercios_descartados", "dias_sin_datos"]
+             + [c.nombre for c in CONTROLES] + ["portal_actualizado"])
 
 
 @dataclass
@@ -183,6 +183,18 @@ def controlar_comercios(fecha: date, descartados: list[str]) -> ResultadoControl
     if not descartados:
         return ResultadoControl(fecha, "comercios_descartados", OK, 0, "-")
     return ResultadoControl(fecha, "comercios_descartados", ADVERTENCIA, len(descartados), " | ".join(descartados))
+
+
+def controlar_continuidad(fecha: date, anterior: date | None) -> ResultadoControl:
+    """Avisa si entre el último día guardado y este hay días sin datos (la ejecución diaria no corrió)."""
+    if anterior is None:
+        return ResultadoControl(fecha, "dias_sin_datos", OK, 0, "no hay un día anterior guardado")
+    faltan = (fecha - anterior).days - 1
+    if faltan <= 0:
+        return ResultadoControl(fecha, "dias_sin_datos", OK, 0, "-")
+    primero, ultimo = anterior + timedelta(days=1), fecha - timedelta(days=1)
+    rango = str(primero) if faltan == 1 else f"del {primero} al {ultimo}"
+    return ResultadoControl(fecha, "dias_sin_datos", ADVERTENCIA, faltan, f"no hay datos guardados {rango}")
 
 
 def controlar_portal(hoy: date, fecha_mas_reciente: date) -> ResultadoControl:
