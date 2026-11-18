@@ -133,7 +133,7 @@ Para dejarla funcionando (una sola vez):
 .\scripts\registrar_tarea.ps1 -Hora "16:30" # otra hora
 ```
 
-Cada día la tarea baja el paquete, lo controla, lo guarda y sube los Parquet a los Releases del repo. Si algo falla, muestra una ventana de aviso.
+Cada día la tarea baja el paquete, lo controla, lo guarda, sube los Parquet a los Releases del repo y actualiza el modelo (`data/modelo.duckdb`). Si algo falla, muestra una ventana de aviso.
 
 | Qué | Dónde |
 |---|---|
@@ -146,7 +146,7 @@ Si la tarea se perdió la hora, corre apenas la prendés.
 
 | Comando | Qué hace |
 |---|---|
-| `python -m src.diaria` | Lo que hace la tarea: bajar, ingerir y subir. |
+| `python -m src.diaria` | Lo que hace la tarea: bajar, ingerir, subir y actualizar el modelo. |
 | `Start-ScheduledTask -TaskName "Monitor precios supermercados"` | Lanza la tarea ahora. |
 | `Unregister-ScheduledTask -TaskName "Monitor precios supermercados" -Confirm:$false` | La saca del Programador. |
 | `python -m src.almacen subir` / `bajar --dias 10` | Sube o baja los Parquet y los logs a mano. |
